@@ -1,6 +1,6 @@
 // variables
 var foodChain = [];
-var enemies = [];
+var enemiesData = [];
 
 // Scene
 var inGame = 
@@ -11,6 +11,7 @@ var inGame =
         game.load.image('tail', 'assets/sprites/tail.png');
         game.load.image('background', 'assets/sprites/background.jpg');
     },
+
     create : function()
     {
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -18,25 +19,72 @@ var inGame =
     
         game.add.tileSprite(0, 0, 5000, 5000, 'background'); 
         game.world.setBounds(0, 0, 5000, 5000);
+
+        this.collision = {
+            cool:0,
+            term:0.07
+        }
     
         this.player = new Player();
     
-        for (let i = 0; i < 10; i++)
+        for (let i = 0; i < 4; i++)
         {
             this.player.addTail();
         }
     },
+
     update : function()
     {
         this.player.update();
+        this.tailCollision();
         if (game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).justDown)
         {
             this.player.addTail();
         }
     },
+
     render : function()
     {
-        game.debug.cameraInfo(game.camera, 32, 32);
+        game.debug.text(1 / game.time.physicsElapsed, 32, 32);
+    },
+
+    tailCollision : function()
+    {
+        this.collision.cool += game.time.physicsElapsed;
+        if (this.collision.cool >= this.collision.term)
+        {
+            this.collision.cool -= this.collision.term;
+
+            for (let i = 0; i < enemiesData.length; i++)
+            {
+                for (let j = 0; j < enemiesData[i].tail.length; j++)
+                {
+                    if (isCollide(this.player.body.position, enemiesData[i].tail[j].position, this))
+                    {
+                        collision();
+                        break;
+                    }
+                }
+            }
+            for (let i = 0; i < this.player.tail.length; i++)
+            {
+                if (isCollide(this.player.body.position, this.player.tail[i].position, this))
+                {
+                    collision();
+                    break;
+                }
+            }
+    
+            function isCollide(player, tail, self)
+            {
+                return Util.doubleDistance(player, tail) <= Math.pow(self.player.body.width / 4, 2);
+            }
+    
+            function collision()
+            {
+
+            }
+        }
     }
 }
 
@@ -45,6 +93,7 @@ class Player
 {
     constructor()
     {
+        this.lastAngle = 0;
         this.tail = [];
         this.body = game.add.sprite(game.world.centerX, game.world.centerY, 'body');
         this.body.anchor.setTo(0.5, 0.5);
@@ -58,7 +107,7 @@ class Player
         // Create Tail
         if (this.tail.length == 0)
         {
-            this.tail.push(game.add.sprite(this.body.position.x, this.body.position.y, 'tail'));
+            this.tail.push(game.add.sprite(this.body.position.x + this.body.width * 2, this.body.position.y, 'tail'));
         }
         else
         {
@@ -71,18 +120,60 @@ class Player
         game.physics.arcade.enable(newTail);
         newTail.tint = game.rnd.integerInRange(0, Math.pow(16, 6) - 1);
     
-        // Set Tails's Scale and Layer
-        for (let i = this.tail.length - 1; i >= 0; i--)
-        {
-            game.world.bringToTop(this.tail[i]);
-            this.tail[i].scale.setTo(0.2 + (this.tail.length - i - 1) * 0.8 / (this.tail.length), 0.2 + (this.tail.length - i - 1) * 0.8 / (this.tail.length));
-        }
-        game.world.bringToTop(this.body);
+        // Set Tails's Scale
+        this.tail.forEach((element, index) => {
+            element.scale.setTo(0.2 + (this.tail.length - index - 1) * 0.8 / (this.tail.length));
+        })
     }
     
     update()
     {
         this.move();
+
+        let enemyData = [];
+        enemyData[0] = {
+            body:{
+                x:this.body.position.x,
+                y:(this.body.position.y + 150),
+                rot:this.body.rotation
+            },
+            tail:[]
+        };
+        for (let i = 0; i < this.tail.length; i++)
+        {
+            enemyData[0].tail[i] = {
+                x:this.tail[i].position.x,
+                y:(this.tail[i].position.y + 150),
+                rot:this.tail[i].rotation,
+                scale:{
+                    x:this.tail[i].scale.x,
+                    y:this.tail[i].scale.y
+                }
+            }
+        }
+        Enemy.getDataFromServer(enemyData);
+
+        enemyData[1] = {
+            body:{
+                x:this.body.position.x,
+                y:(this.body.position.y - 150),
+                rot:this.body.rotation
+            },
+            tail:[]
+        };
+        for (let i = 0; i < this.tail.length; i++)
+        {
+            enemyData[1].tail[i] = {
+                x:this.tail[i].position.x,
+                y:(this.tail[i].position.y - 150),
+                rot:this.tail[i].rotation,
+                scale:{
+                    x:this.tail[i].scale.x,
+                    y:this.tail[i].scale.y
+                }
+            }
+        }
+        Enemy.getDataFromServer(enemyData);
     }
     
     move()
@@ -101,17 +192,42 @@ class Player
         let y2 = game.input.activePointer.y + game.camera.position.y;
         let angle = game.physics.arcade.angleBetween(this.body, {x:game.input.activePointer.position.x + game.camera.position.x, y:game.input.activePointer.position.y + game.camera.position.y});
         
-        if (Util.distance(x1, y1, x2, y2) <= this.body.width / 2)
+        if (Util.distance(x1, y1, x2, y2) <= this.body.width)
         {
-            this.body.body.velocity.setTo(0, 0);
+            this.body.body.velocity.x = speed * Math.cos(this.lastAngle);
+            this.body.body.velocity.y = speed * Math.sin(this.lastAngle);
+            this.body.rotation = this.lastAngle;
         }
         else
         {
-            
+            if (Math.abs(this.lastAngle - angle) > Math.PI * game.time.physicsElapsed)
+            {
+                let angle2 = (angle - this.lastAngle);
+
+                if (angle2 < -Math.PI)
+                {
+                    angle2 += 2 * Math.PI;
+                }
+                else if (angle2 > Math.PI)
+                {
+                    angle2 -= 2 * Math.PI;
+                }
+
+                if (angle2 < 0)
+                {
+                    angle = this.lastAngle - Math.PI * game.time.physicsElapsed;
+                }
+                else
+                {
+                    angle = this.lastAngle + Math.PI * game.time.physicsElapsed;
+                }
+            }
+            this.lastAngle = angle;
+
             this.body.body.velocity.x = speed * Math.cos(angle);
             this.body.body.velocity.y = speed * Math.sin(angle);
+            this.body.rotation = angle;
         }
-        this.body.rotation = angle;
     
         // Tail Move
         for (let i = 0; i < this.tail.length; i++)
@@ -159,16 +275,47 @@ class Enemy
         this.tail = [];
     }
 
-    static getDataFromServer()
+    static getDataFromServer(enemies)
     {
+        enemiesData.forEach(element1 => {
+            element1.body.destroy();
+            element1.tail.forEach(element2 => {
+                element2.destroy();
+            });
+        });
+        enemiesData = [];
 
+        enemies.forEach((element, index) => {
+            enemiesData.push(new Enemy());
+            enemiesData[index].getDataEach(element);
+        });
     }
 
-    getDataEach()
+    getDataEach(data)
     {
+        // Create body
+        this.body = game.add.sprite(data.body.x, data.body.y, 'body');
+        this.body.rotation = data.body.rot;
+        this.body.anchor.setTo(0.5, 0.5);
 
+        data.tail.forEach((element, index) => {
+            this.tail.push(game.add.sprite(element.x, element.y, 'tail'));
+            this.tail[index].rotation = element.rot;
+            this.tail[index].anchor.setTo(0.5, 0.5);
+            this.tail[index].scale.setTo(element.scale.x, element.scale.y);
+        });
     }
 }
+// 적 배열
+    // 머리
+        // x
+        // y
+        // rot
+    // 꼬리 배열
+        // 꼬리
+            // x
+            // y
+            // rot
 
 // Game
 var game = new Phaser.Game(innerWidth, innerHeight, Phaser.CANVAS);
