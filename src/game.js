@@ -1,15 +1,15 @@
 // variables
-var foodChain = [];
-var enemiesData = [];
+let foodChain = [];
+let enemiesData = [];
 
 // Scene
-var inGame = 
+let inGame = 
 {
     preload : function()
     {
-        game.load.image('body', 'assets/sprites/body.png');
-        game.load.image('tail', 'assets/sprites/tail.png');
-        game.load.image('background', 'assets/sprites/background.jpg');
+        game.load.image('body', 'src/assets/sprites/body.png');
+        game.load.image('tail', 'src/assets/sprites/tail.png');
+        game.load.image('background', 'src/assets/sprites/background.jpg');
     },
 
     create : function()
@@ -21,20 +21,15 @@ var inGame =
         game.world.setBounds(0, 0, 5000, 5000);
     
         this.player = new Player();
-    
         for (let i = 0; i < 4; i++)
-        {
             this.player.addTail();
-        }
     },
 
     update : function()
     {
         this.player.update();
         if (game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).justDown)
-        {
             this.player.addTail();
-        }
     },
 
     render : function()
@@ -60,13 +55,9 @@ class Player
     {
         // Create Tail
         if (this.tail.length == 0)
-        {
             this.tail.push(game.add.sprite(this.body.position.x + this.body.width * 2, this.body.position.y, 'tail'));
-        }
         else
-        {
             this.tail.push(game.add.sprite(this.tail[this.tail.length - 1].body.position.x, this.tail[this.tail.length - 1].body.position.y, 'tail'));
-        }
     
         let newTail = this.tail[this.tail.length - 1];
 
@@ -74,8 +65,8 @@ class Player
         game.physics.arcade.enable(newTail);
     
         // Set Tails's Scale
-        this.tail.forEach((element, index) => {
-            element.scale.setTo(0.2 + (this.tail.length - index - 1) * 0.8 / (this.tail.length));
+        this.tail.forEach((tail, index) => {
+            tail.scale.setTo(0.2 + (this.tail.length - index - 1) * 0.8 / (this.tail.length));
         })
     }
     
@@ -91,9 +82,7 @@ class Player
         let defaultSpeed = 300;
         let speed = defaultSpeed;
         if (game.input.activePointer.leftButton.isDown)
-        {
             speed = 600;
-        }
     
         // Body Move
         let x1 = this.body.position.x + this.body.width / 2;
@@ -178,26 +167,22 @@ class Player
 
     tailCollision()
     {
-        for (let i = 0; i < this.tail.length; i++)
-        {
-            this.tail[i].tint = 0xffffff;
-
-            if (isCollide(this.tail[i].position, this.body.position, this.body.width))
+        this.tail.forEach(tail => {
+            tail.tint = 0xffffff;
+            if (isCollide(tail.position, this.body.position, this.body.width))
             {
-                this.tail[i].tint = 0xff0000;
+                tail.tint = 0xff0000;
                 collision();
-                break;
+                return;
             }
-            for (let j = 0; j < enemiesData.length; j++)
+
+            if (enemiesData.find(enemyData => isCollide(tail.position, enemyData.body.position, this.body.width) == true)) 
             {
-                if (isCollide(this.tail[i].position, enemiesData[j].body.position, this.body.width))
-                {
-                    this.tail[i].tint = 0x0000ff;
-                    collision();
-                }
+                tail.tint = 0x0000ff;
+                collision();
             }
-        }
-    
+        });
+
         function isCollide(tail, head, width)
         {
             return Util.doubleDistance(tail, head) <= Math.pow(width / 2, 2);
@@ -212,21 +197,19 @@ class Player
     emitDataToServer()
     {
         let data = {
-            body:{
-                x:this.body.position.x,
-                y:this.body.position.y,
-                rot:this.body.rotation
-            },
+            x:this.body.position.x,
+            y:this.body.position.y,
+            rotation:this.body.rotation,
             tail:[]
         };
-        this.tail.forEach(element => {
+        this.tail.forEach(tail => {
             data.tail.push({
-                x:element.position.x,
-                y:element.position.y,
-                rot:element.rotation,
+                x:tail.position.x,
+                y:tail.position.y,
+                rotation:tail.rotation,
                 scale:{
-                    x:element.scale.x,
-                    y:element.scale.y
+                    x:tail.scale.x,
+                    y:tail.scale.y
                 }
             })
         });
@@ -246,58 +229,49 @@ class Enemy
     static getDataFromServer(enemies)
     {
         // Destroy last data
-        enemiesData.forEach(element1 => {
-            element1.body.destroy();
-            element1.tail.forEach(element2 => {
-                element2.destroy();
+        enemiesData.forEach(enemy => {
+            enemy.body.destroy();
+            enemy.tail.forEach(tail => {
+                tail.destroy();
             });
         });
         enemiesData = [];
 
-console.log(enemies);
-
-        // Destroy object that's oneself
-        for (let i = 0; i < enemies.length; i++)
-        {
-            if (enemies[i].id == socket.id)
-            {
-                enemies.splice(i, 1);
-                break;
-            }
-        }
+        //Destroy object that's oneself
+        enemies.splice(enemies.findIndex(enemy => enemy.id == socket.id), 1);
 
         // Add object on enemies array
-        enemies.forEach((element, index) => {
+        enemies.forEach((enemy, index) => {
             enemiesData.push(new Enemy());
-            enemiesData[index].getDataEach(element);
+            enemiesData[index].getDataEach(enemy);
         });
     }
 
     getDataEach(data)
     {
         // Create body
-        this.body = game.add.sprite(data.body.x, data.body.y, 'body');
-        this.body.rotation = data.body.rot;
+        this.body = game.add.sprite(data.x, data.y, 'body');
+        this.body.rotation = data.rotation;
         this.body.anchor.setTo(0.5, 0.5);
 
-        data.tail.forEach((element, index) => {
-            this.tail.push(game.add.sprite(element.x, element.y, 'tail'));
-            this.tail[index].rotation = element.rot;
+        data.tail.forEach((tail, index) => {
+            this.tail.push(game.add.sprite(tail.x, tail.y, 'tail'));
+            this.tail[index].rotation = tail.rot;
             this.tail[index].anchor.setTo(0.5, 0.5);
-            this.tail[index].scale.setTo(element.scale.x, element.scale.y);
+            this.tail[index].scale.setTo(tail.scale.x, tail.scale.y);
         });
     }
 }
 
 // Socket IO
-var socket = io('http://jinhyeokfang.iptime.org:8080');
+let socket = io('http://jinhyeokfang.iptime.org');
 socket.on("update", function(data)
 {
     Enemy.getDataFromServer(data.users);
 });
 
 // Game
-var game = new Phaser.Game(innerWidth, innerHeight, Phaser.CANVAS);
+let game = new Phaser.Game(innerWidth, innerHeight, Phaser.CANVAS);
 
 game.state.add('inGame', inGame);
 
