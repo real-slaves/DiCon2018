@@ -19,11 +19,6 @@ var inGame =
     
         game.add.tileSprite(0, 0, 5000, 5000, 'background'); 
         game.world.setBounds(0, 0, 5000, 5000);
-
-        this.collision = {
-            cool:0,
-            term:0.07
-        }
     
         this.player = new Player();
     
@@ -36,7 +31,6 @@ var inGame =
     update : function()
     {
         this.player.update();
-        this.tailCollision();
         if (game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).justDown)
         {
             this.player.addTail();
@@ -46,45 +40,6 @@ var inGame =
     render : function()
     {
         game.debug.text(1 / game.time.physicsElapsed, 32, 32);
-    },
-
-    tailCollision : function()
-    {
-        this.collision.cool += game.time.physicsElapsed;
-        if (this.collision.cool >= this.collision.term)
-        {
-            this.collision.cool -= this.collision.term;
-
-            for (let i = 0; i < enemiesData.length; i++)
-            {
-                for (let j = 0; j < enemiesData[i].tail.length; j++)
-                {
-                    if (isCollide(this.player.body.position, enemiesData[i].tail[j].position, this))
-                    {
-                        collision();
-                        break;
-                    }
-                }
-            }
-            for (let i = 0; i < this.player.tail.length; i++)
-            {
-                if (isCollide(this.player.body.position, this.player.tail[i].position, this))
-                {
-                    collision();
-                    break;
-                }
-            }
-    
-            function isCollide(player, tail, self)
-            {
-                return Util.doubleDistance(player, tail) <= Math.pow(self.player.body.width / 4, 2);
-            }
-    
-            function collision()
-            {
-
-            }
-        }
     }
 }
 
@@ -99,7 +54,6 @@ class Player
         this.body.anchor.setTo(0.5, 0.5);
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
-        this.body.tint = game.rnd.integerInRange(0, Math.pow(16, 6) - 1);
     }
 
     addTail()
@@ -118,7 +72,6 @@ class Player
 
         newTail.anchor.setTo(0.5, 0.5);
         game.physics.arcade.enable(newTail);
-        newTail.tint = game.rnd.integerInRange(0, Math.pow(16, 6) - 1);
     
         // Set Tails's Scale
         this.tail.forEach((element, index) => {
@@ -129,6 +82,7 @@ class Player
     update()
     {
         this.move();
+        this.tailCollision();
 
         let enemyData = [];
         enemyData[0] = {
@@ -144,28 +98,6 @@ class Player
             enemyData[0].tail[i] = {
                 x:this.tail[i].position.x,
                 y:(this.tail[i].position.y + 150),
-                rot:this.tail[i].rotation,
-                scale:{
-                    x:this.tail[i].scale.x,
-                    y:this.tail[i].scale.y
-                }
-            }
-        }
-        Enemy.getDataFromServer(enemyData);
-
-        enemyData[1] = {
-            body:{
-                x:this.body.position.x,
-                y:(this.body.position.y - 150),
-                rot:this.body.rotation
-            },
-            tail:[]
-        };
-        for (let i = 0; i < this.tail.length; i++)
-        {
-            enemyData[1].tail[i] = {
-                x:this.tail[i].position.x,
-                y:(this.tail[i].position.y - 150),
                 rot:this.tail[i].rotation,
                 scale:{
                     x:this.tail[i].scale.x,
@@ -263,6 +195,39 @@ class Player
                 }
                 this.tail[i].rotation = game.physics.arcade.angleBetween(this.tail[i], this.tail[i-1]);
             }
+        }
+    }
+
+    tailCollision()
+    {
+        for (let i = 0; i < this.tail.length; i++)
+        {
+            this.tail[i].tint = 0xffffff;
+
+            if (isCollide(this.tail[i].position, this.body.position, this.body.width))
+            {
+                this.tail[i].tint = 0xff0000;
+                collision();
+                break;
+            }
+            for (let j = 0; j < enemiesData.length; j++)
+            {
+                if (isCollide(this.tail[i].position, enemiesData[j].body.position, this.body.width))
+                {
+                    this.tail[i].tint = 0xff0000;
+                    collision();
+                }
+            }
+        }
+    
+        function isCollide(tail, head, width)
+        {
+            return Util.doubleDistance(tail, head) <= Math.pow(width / 2, 2);
+        }
+
+        function collision()
+        {
+
         }
     }
 }
