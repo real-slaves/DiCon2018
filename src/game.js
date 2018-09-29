@@ -83,29 +83,7 @@ class Player
     {
         this.move();
         this.tailCollision();
-
-        let enemyData = [];
-        enemyData[0] = {
-            body:{
-                x:this.body.position.x,
-                y:(this.body.position.y + 150),
-                rot:this.body.rotation
-            },
-            tail:[]
-        };
-        for (let i = 0; i < this.tail.length; i++)
-        {
-            enemyData[0].tail[i] = {
-                x:this.tail[i].position.x,
-                y:(this.tail[i].position.y + 150),
-                rot:this.tail[i].rotation,
-                scale:{
-                    x:this.tail[i].scale.x,
-                    y:this.tail[i].scale.y
-                }
-            }
-        }
-        Enemy.getDataFromServer(enemyData);
+        this.emitDataToServer();
     }
     
     move()
@@ -214,7 +192,7 @@ class Player
             {
                 if (isCollide(this.tail[i].position, enemiesData[j].body.position, this.body.width))
                 {
-                    this.tail[i].tint = 0xff0000;
+                    this.tail[i].tint = 0x0000ff;
                     collision();
                 }
             }
@@ -230,6 +208,31 @@ class Player
 
         }
     }
+
+    emitDataToServer()
+    {
+        let data = {
+            body:{
+                x:this.body.position.x,
+                y:this.body.position.y,
+                rot:this.body.rotation
+            },
+            tail:[]
+        };
+        this.tail.forEach(element => {
+            data.tail.push({
+                x:element.position.x,
+                y:element.position.y,
+                rot:element.rotation,
+                scale:{
+                    x:element.scale.x,
+                    y:element.scale.y
+                }
+            })
+        });
+
+        socket.emit("update", data);
+    }
 }
 
 class Enemy
@@ -242,6 +245,7 @@ class Enemy
 
     static getDataFromServer(enemies)
     {
+        // Destroy last data
         enemiesData.forEach(element1 => {
             element1.body.destroy();
             element1.tail.forEach(element2 => {
@@ -250,6 +254,19 @@ class Enemy
         });
         enemiesData = [];
 
+console.log(enemies);
+
+        // Destroy object that's oneself
+        for (let i = 0; i < enemies.length; i++)
+        {
+            if (enemies[i].id == socket.id)
+            {
+                enemies.splice(i, 1);
+                break;
+            }
+        }
+
+        // Add object on enemies array
         enemies.forEach((element, index) => {
             enemiesData.push(new Enemy());
             enemiesData[index].getDataEach(element);
@@ -271,16 +288,13 @@ class Enemy
         });
     }
 }
-// 적 배열
-    // 머리
-        // x
-        // y
-        // rot
-    // 꼬리 배열
-        // 꼬리
-            // x
-            // y
-            // rot
+
+// Socket IO
+var socket = io('http://jinhyeokfang.iptime.org:8080');
+socket.on("update", function(data)
+{
+    Enemy.getDataFromServer(data.users);
+});
 
 // Game
 var game = new Phaser.Game(innerWidth, innerHeight, Phaser.CANVAS);
