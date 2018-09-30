@@ -3,6 +3,30 @@ let foodChain = [];
 let enemiesData = [];
 
 // Scene
+let waiting = 
+{
+    preload : function()
+    {
+        game.load.image('background', 'src/assets/sprites/background.jpg');
+    },
+
+    create : function()
+    {
+        game.add.tileSprite(0, 0, 5000, 5000, 'background'); 
+        game.world.setBounds(0, 0, 5000, 5000);
+        var style = { font: "bold 50px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+        var text = game.add.text(0, 0, "3 / 4\nWaiting", style)
+    },
+
+    update : function()
+    {
+    },
+
+    render : function()
+    {
+    }
+}
+
 let inGame = 
 {
     preload : function()
@@ -274,5 +298,6 @@ socket.on("update", function(data)
 let game = new Phaser.Game(innerWidth, innerHeight, Phaser.CANVAS);
 
 game.state.add('inGame', inGame);
+game.state.add('waiting', waiting);
 
-game.state.start('inGame');
+game.state.start('waiting');
