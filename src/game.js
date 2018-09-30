@@ -16,7 +16,8 @@ let waiting =
         game.add.tileSprite(0, 0, 5000, 5000, 'background'); 
         game.world.setBounds(0, 0, 5000, 5000);
         var style = { font: "bold 50px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
-        var text = game.add.text(0, 0, "3 / 4\nWaiting", style)
+        this.waitingText = game.add.text(100, 100, "3 / 4", style)
+        this.waitingText.setShadow(3, 3, 'rgba(0,0,0,1)', 2);
     },
 
     update : function()
@@ -25,6 +26,12 @@ let waiting =
 
     render : function()
     {
+    },
+
+    getDataFromServer : function(data)
+    {
+        if (roomid != -1)
+            game.state.start('inGame');
     }
 }
 
@@ -46,6 +53,7 @@ let inGame =
         game.world.setBounds(0, 0, 5000, 5000);
     
         this.player = new Player();
+        this.player.body.tint = 0x2EFE2E;
         for (let i = 0; i < 4; i++)
             this.player.addTail();
     },
@@ -193,17 +201,11 @@ class Player
     tailCollision()
     {
         this.tail.forEach(tail => {
-            tail.tint = 0xffffff;
-            if (isCollide(tail.position, this.body.position, this.body.width))
-            {
-                tail.tint = 0xff0000;
-                collision();
-                return;
-            }
+            tail.tint = 0x2EFE2E;
 
             if (enemiesData.find(enemyData => isCollide(tail.position, enemyData.body.position, this.body.width) == true)) 
             {
-                tail.tint = 0x0000ff;
+                tail.tint = 0xff0000;
                 collision();
             }
         });
@@ -232,7 +234,6 @@ class Player
             data.tail.push({
                 x:tail.position.x,
                 y:tail.position.y,
-                rotation:tail.rotation,
                 scale:{
                     x:tail.scale.x,
                     y:tail.scale.y
@@ -282,12 +283,14 @@ class Enemy
         this.body = game.add.sprite(data.x, data.y, 'body');
         this.body.rotation = data.rotation;
         this.body.anchor.setTo(0.5, 0.5);
+        this.body.tint = 0xF7FE2E;
 
         data.tail.forEach((tail, index) => {
             this.tail.push(game.add.sprite(tail.x, tail.y, 'tail'));
-            this.tail[index].rotation = tail.rot;
             this.tail[index].anchor.setTo(0.5, 0.5);
             this.tail[index].scale.setTo(tail.scale.x, tail.scale.y);
+            this.tail[index].tint = 0xF7FE2E;
+            this.tail[index].rotation = game.physics.arcade.angleBetween(this.tail[index].position, (index == 0) ? this.body.position : this.tail[index - 1].position);
         });
     }
 }
@@ -297,6 +300,8 @@ let socket = io('http://jinhyeokfang.iptime.org');
 socket.on("update", function(data)
 {
     Enemy.getDataFromServer(data.users);
+    if (game.state.current == 'waiting')
+        waiting.getDataFromServer();
 });
 
 // Game
