@@ -1,6 +1,7 @@
 // variables
 let foodChain = [];
 let enemiesData = [];
+let roomid = -1;
 
 // Scene
 let waiting = 
@@ -224,7 +225,8 @@ class Player
             x:this.body.position.x,
             y:this.body.position.y,
             rotation:this.body.rotation,
-            tail:[]
+            tail:[],
+            roomid: roomid
         };
         this.tail.forEach(tail => {
             data.tail.push({
@@ -261,9 +263,12 @@ class Enemy
         });
         enemiesData = [];
 
+        // Save User's roomid
+        roomid = enemies.find(enemy => enemy.id == socket.id).roomid;
+
         //Destroy object that's oneself
         enemies.splice(enemies.findIndex(enemy => enemy.id == socket.id), 1);
-
+        
         // Add object on enemies array
         enemies.forEach((enemy, index) => {
             enemiesData.push(new Enemy());
