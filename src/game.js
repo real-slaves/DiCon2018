@@ -3,6 +3,7 @@ let foodChain = [];
 let enemiesData = [];
 let roomid = -1;
 let status = 0;
+let player = {};
 
 // Scene
 let waiting = 
@@ -53,17 +54,17 @@ let inGame =
         game.add.tileSprite(0, 0, 5000, 5000, 'background'); 
         game.world.setBounds(0, 0, 5000, 5000);
     
-        this.player = new Player();
-        this.player.body.tint = 0x2EFE2E;
+        player = new Player();
+        player.body.tint = 0x2EFE2E;
         for (let i = 0; i < 4; i++)
-            this.player.addTail();
+            player.addTail();
     },
 
     update : function()
     {
-        this.player.update();
+        player.update();
         if (game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).justDown)
-            this.player.addTail();
+            player.addTail();
     },
 
     render : function()
@@ -81,6 +82,8 @@ class Player
         this.tail = [];
         this.body = game.add.sprite(game.world.centerX, game.world.centerY, 'body');
         this.body.anchor.setTo(0.5, 0.5);
+        this.bounce = {x:0, y:0};
+
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
     }
@@ -128,8 +131,8 @@ class Player
         
         if (Util.distance(x1, y1, x2, y2) <= this.body.width)
         {
-            this.body.body.velocity.x = speed * Math.cos(this.lastAngle);
-            this.body.body.velocity.y = speed * Math.sin(this.lastAngle);
+            this.body.body.velocity.x = speed * Math.cos(this.lastAngle) + this.bounce.x;
+            this.body.body.velocity.y = speed * Math.sin(this.lastAngle) + this.bounce.y;
             this.body.rotation = this.lastAngle;
         }
         else
@@ -146,10 +149,15 @@ class Player
             }
             this.lastAngle = angle;
 
-            this.body.body.velocity.x = speed * Math.cos(angle);
-            this.body.body.velocity.y = speed * Math.sin(angle);
+            this.body.body.velocity.x = speed * Math.cos(angle) + this.bounce.x;
+            this.body.body.velocity.y = speed * Math.sin(angle) + this.bounce.y;
             this.body.rotation = angle;
         }
+
+        this.bounce.x -= game.time.physicsElapsed * 1000;
+        this.bounce.y -= game.time.physicsElapsed * 1000;
+        if (this.bounce.x < 0) this.bounce.x = 0;
+        if (this.bounce.y < 0) this.bounce.y = 0;
     
         // Tail Move
         for (let i = 0; i < this.tail.length; i++)
@@ -210,11 +218,18 @@ class Player
             function collision(enemy, collideTail)
             {
                 if (foodChain.find(chain => (chain.hunter == socket.id && chain.target == enemy.id)))
+                {
                     console.log("my Target");
+                }
                 else if (foodChain.find(chain => (chain.target == socket.id && chain.hunter == enemy.id)))
+                {
                     console.log("my Hunter");
+                }
                 else
-                    console.log("nope");
+                {
+                    player.bounce.x = 1000 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                    player.bounce.y = 1000 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                }
             }
         }
     }
@@ -293,13 +308,6 @@ class Enemy
             if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
                 this.tail[index].tint = 0x00ffff;
         });
-
-        if (foodChain.find(chain => (chain.hunter == socket.id) != undefined))
-        {
-            console.log(foodChain.find(chain => (chain.hunter == socket.id)).target);
-
-
-        }
     }
 }
 
