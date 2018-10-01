@@ -219,11 +219,10 @@ class Player
             {
                 if (foodChain.find(chain => (chain.hunter == socket.id && chain.target == enemy.id)))
                 {
-                    console.log("my Target");
+                    socket.emit('died', {hunter:socket.id, target:enemy.id});
                 }
                 else if (foodChain.find(chain => (chain.target == socket.id && chain.hunter == enemy.id)))
                 {
-                    console.log("my Hunter");
                 }
                 else
                 {
@@ -323,6 +322,9 @@ socket.on("update", function(data)
         status = data.room.status;
     }
     Enemy.getDataFromServer(data.users);
+});
+socket.on("died", () => {
+    close();
 });
 
 // Game
