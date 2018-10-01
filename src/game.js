@@ -2,6 +2,7 @@
 let foodChain = [];
 let enemiesData = [];
 let roomid = -1;
+let status = 0;
 
 // Scene
 let waiting = 
@@ -95,6 +96,7 @@ class Player
         let newTail = this.tail[this.tail.length - 1];
 
         newTail.anchor.setTo(0.5, 0.5);
+        newTail.tint = 0x2EFE2E;
         game.physics.arcade.enable(newTail);
     
         // Set Tails's Scale
@@ -136,23 +138,11 @@ class Player
             {
                 let angle2 = (angle - this.lastAngle);
 
-                if (angle2 < -Math.PI)
-                {
-                    angle2 += 2 * Math.PI;
-                }
-                else if (angle2 > Math.PI)
-                {
-                    angle2 -= 2 * Math.PI;
-                }
+                if (angle2 < -Math.PI) angle2 += 2 * Math.PI;
+                else if (angle2 > Math.PI) angle2 -= 2 * Math.PI;
 
-                if (angle2 < 0)
-                {
-                    angle = this.lastAngle - Math.PI * game.time.physicsElapsed;
-                }
-                else
-                {
-                    angle = this.lastAngle + Math.PI * game.time.physicsElapsed;
-                }
+                if (angle2 < 0) angle = this.lastAngle - Math.PI * game.time.physicsElapsed;
+                else angle = this.lastAngle + Math.PI * game.time.physicsElapsed;
             }
             this.lastAngle = angle;
 
@@ -200,24 +190,32 @@ class Player
 
     tailCollision()
     {
-        this.tail.forEach(tail => {
-            tail.tint = 0x2EFE2E;
+        if (status == 1)
+        {
+            enemiesData.forEach(enemy => {
+                let tailIndex = enemy.tail.findIndex(tail => isCollide(tail.position, this.body.position, this.body.width));
 
-            if (enemiesData.find(enemyData => isCollide(tail.position, enemyData.body.position, this.body.width) == true)) 
+                if (tailIndex != -1)
+                {
+                    enemy.tail[tailIndex].tint = 0xff0000;
+                    collision(enemy, enemy.tail[tailIndex]);
+                }
+            })
+    
+            function isCollide(tail, head, width)
             {
-                tail.tint = 0xff0000;
-                collision();
+                return Util.doubleDistance(tail, head) <= Math.pow(width / 2, 2);
             }
-        });
-
-        function isCollide(tail, head, width)
-        {
-            return Util.doubleDistance(tail, head) <= Math.pow(width / 2, 2);
-        }
-
-        function collision()
-        {
-
+    
+            function collision(enemy, collideTail)
+            {
+                if (foodChain.find(chain => (chain.hunter == socket.id && chain.target == enemy.id)))
+                    console.log("my Target");
+                else if (foodChain.find(chain => (chain.target == socket.id && chain.hunter == enemy.id)))
+                    console.log("my Hunter");
+                else
+                    console.log("nope");
+            }
         }
     }
 
@@ -283,25 +281,40 @@ class Enemy
         this.body = game.add.sprite(data.x, data.y, 'body');
         this.body.rotation = data.rotation;
         this.body.anchor.setTo(0.5, 0.5);
-        this.body.tint = 0xF7FE2E;
+        this.id = data.id;
+        if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
+            this.body.tint = 0x00ffff;
 
         data.tail.forEach((tail, index) => {
             this.tail.push(game.add.sprite(tail.x, tail.y, 'tail'));
             this.tail[index].anchor.setTo(0.5, 0.5);
             this.tail[index].scale.setTo(tail.scale.x, tail.scale.y);
-            this.tail[index].tint = 0xF7FE2E;
             this.tail[index].rotation = game.physics.arcade.angleBetween(this.tail[index].position, (index == 0) ? this.body.position : this.tail[index - 1].position);
+            if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
+                this.tail[index].tint = 0x00ffff;
         });
+
+        if (foodChain.find(chain => (chain.hunter == socket.id) != undefined))
+        {
+            console.log(foodChain.find(chain => (chain.hunter == socket.id)).target);
+
+
+        }
     }
 }
 
 // Socket IO
-let socket = io('http://jinhyeokfang.iptime.org');
+let socket = io('http://tail-server-qhjjb.run.goorm.io');
 socket.on("update", function(data)
 {
-    Enemy.getDataFromServer(data.users);
     if (game.state.current == 'waiting')
         waiting.getDataFromServer();
+    if (game.state.current == 'inGame')
+    {
+        foodChain = data.room.foodchain;
+        status = data.room.status;
+    }
+    Enemy.getDataFromServer(data.users);
 });
 
 // Game
