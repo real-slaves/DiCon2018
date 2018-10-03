@@ -7,6 +7,7 @@ let player = {};
 
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
+let isFirst = true;
 
 // Scene
 let main = 
@@ -19,14 +20,26 @@ let main =
         game.load.image('text1', 'src/assets/sprites/main/text1.png');
         game.load.image('text2', 'src/assets/sprites/main/text2.png');
         game.load.image('text3', 'src/assets/sprites/main/text3.png');
+        game.load.image('madeBy', 'src/assets/sprites/main/madeBy.png');
     },
 
     create : function()
     {
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
-        
-        this.time = 0;
+
+        if (isFirst)
+        {
+            isFirst = false;
+            this.time = 0;
+        }
+        else
+        {
+            this.time = 10;
+        }
         this.button = [];
+        this.goToWaiting = 0;
+
+        this.madeBy = game.add.sprite(screenWidth - 220, screenHeight - 100, 'madeBy');
 
         this.logo = game.add.sprite(screenWidth/2, screenHeight/2, 'logo');
         this.logo.anchor.setTo(0.5);
@@ -43,8 +56,10 @@ let main =
         this.button[2] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 160, 'check'),
             text:game.add.button(screenWidth/2 - 50, screenHeight/2 + 160, 'text3', () => {
-                game.state.start('waiting');
-                roomid = -1;
+                if (this.time >= 6.1 && this.goToWaiting === 0)
+                {
+                    this.goToWaiting = this.time;
+                }
             }, this, 2, 1, 0)
         }
 
@@ -59,43 +74,46 @@ let main =
     update : function()
     {
         this.time += game.time.physicsElapsed;
-        this.intro();
+        this.animation();
     },
 
     render : function()
     {
     },
 
-    intro : function()
+    animation : function()
     {
-        this.logo.alpha = (0 > (this.time / 2) - 0.5) ? 0 : this.time / 2 - 0.5;
-        if (this.time > 3)
+        if (this.goToWaiting !== 0)
         {
-            this.logo.position.y = (screenHeight / 2 - 120 < screenHeight / 2 - (this.time - 3) * 120) ? (screenHeight / 2 - (this.time - 3) * 120) : (screenHeight / 2 - 120);
+            let alpha = 1 - (((this.time - this.goToWaiting) * 2 > 1) ? 1 : (this.time - this.goToWaiting) * 2);
+            this.logo.alpha = alpha;
+            this.button[0].check.alpha = alpha; this.button[0].text.alpha = alpha;
+            this.button[1].check.alpha = alpha; this.button[1].text.alpha = alpha;
+            this.button[2].check.alpha = alpha; this.button[2].text.alpha = alpha;
+            this.madeBy.alpha = alpha;
+            if (this.time - this.goToWaiting > 1)
+            {
+                roomid = -1;
+                game.state.start('waiting');
+            }
         }
-        if (this.time > 4)
+        else
         {
-            this.button[0].check.alpha = (this.time - 4) * 2;
-        }
-        if (this.time > 4.3)
-        {
-            this.button[1].check.alpha = (this.time - 4.3) * 2;
-        }
-        if (this.time > 4.6)
-        {
-            this.button[2].check.alpha = (this.time - 4.6) * 2;
-        }
-        if (this.time > 5)
-        {
-            this.button[0].text.alpha = (this.time - 5) * 2;
-        }
-        if (this.time > 5.3)
-        {
-            this.button[1].text.alpha = (this.time - 5.3) * 2;
-        }
-        if (this.time > 5.6)
-        {
-            this.button[2].text.alpha = (this.time - 5.6) * 2;
+            this.logo.alpha = (0 > (this.time / 2) - 0.5) ? 0 : this.time / 2 - 0.5;
+            if (this.time > 3)
+                this.logo.position.y = (screenHeight / 2 - 120 < screenHeight / 2 - (this.time - 3) * 120) ? (screenHeight / 2 - (this.time - 3) * 120) : (screenHeight / 2 - 120);
+            if (this.time > 4)
+                this.button[0].check.alpha = (this.time - 4) * 2;
+            if (this.time > 4.3)
+                this.button[1].check.alpha = (this.time - 4.3) * 2;
+            if (this.time > 4.6)
+                this.button[2].check.alpha = (this.time - 4.6) * 2;
+            if (this.time > 5)
+                this.button[0].text.alpha = (this.time - 5) * 2;
+            if (this.time > 5.3)
+                this.button[1].text.alpha = (this.time - 5.3) * 2;
+            if (this.time > 5.6)
+                this.button[2].text.alpha = (this.time - 5.6) * 2;
         }
     }
 }
