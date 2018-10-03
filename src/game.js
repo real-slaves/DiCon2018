@@ -1,7 +1,7 @@
 // variables
 let foodChain = [];
 let enemiesData = [];
-let roomid = -1;
+let roomid = -3;
 let status = 0;
 let player = {};
 
@@ -14,23 +14,89 @@ let main =
     preload : function()
     {
         game.load.image('background', 'src/assets/sprites/background.jpg');
-        game.load.image('logo', 'src/assets/sprites/logo.png');
+        game.load.image('logo', 'src/assets/sprites/main/logo.png');
+        game.load.image('check', 'src/assets/sprites/main/check.png');
+        game.load.image('text1', 'src/assets/sprites/main/text1.png');
+        game.load.image('text2', 'src/assets/sprites/main/text2.png');
+        game.load.image('text3', 'src/assets/sprites/main/text3.png');
     },
 
     create : function()
     {
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
-        game.add.sprite(screenWidth/2, screenHeight/2, 'logo').anchor.setTo(0.5, 0.5);
+        
+        this.time = 0;
+        this.button = [];
+
+        this.logo = game.add.sprite(screenWidth/2, screenHeight/2, 'logo');
+        this.logo.anchor.setTo(0.5);
+        this.logo.alpha = 0;
+
+        this.button[0] = {
+            check:game.add.sprite(screenWidth/2 - 50, screenHeight/2, 'check'),
+            text:game.add.sprite(screenWidth/2 - 50, screenHeight/2, 'text1')
+        }
+        this.button[1] = {
+            check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 80, 'check'),
+            text:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 80, 'text2')
+        }
+        this.button[2] = {
+            check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 160, 'check'),
+            text:game.add.button(screenWidth/2 - 50, screenHeight/2 + 160, 'text3', () => {
+                game.state.start('waiting');
+                roomid = -1;
+            }, this, 2, 1, 0)
+        }
+
+        this.button[0].check.anchor.setTo(0.5); this.button[0].text.anchor.setTo(0.5);
+        this.button[1].check.anchor.setTo(0.5); this.button[1].text.anchor.setTo(0.5);
+        this.button[2].check.anchor.setTo(0.5); this.button[2].text.anchor.setTo(0.5);
+        this.button[0].check.alpha = 0; this.button[0].text.alpha = 0;
+        this.button[1].check.alpha = 0; this.button[1].text.alpha = 0;
+        this.button[2].check.alpha = 0; this.button[2].text.alpha = 0;
     },
 
     update : function()
     {
-        if (game.input.activePointer.leftButton.isDown)
-            game.state.start('waiting');
+        this.time += game.time.physicsElapsed;
+        this.intro();
     },
 
     render : function()
     {
+    },
+
+    intro : function()
+    {
+        this.logo.alpha = (0 > (this.time / 2) - 0.5) ? 0 : this.time / 2 - 0.5;
+        if (this.time > 3)
+        {
+            this.logo.position.y = (screenHeight / 2 - 120 < screenHeight / 2 - (this.time - 3) * 120) ? (screenHeight / 2 - (this.time - 3) * 120) : (screenHeight / 2 - 120);
+        }
+        if (this.time > 4)
+        {
+            this.button[0].check.alpha = (this.time - 4) * 2;
+        }
+        if (this.time > 4.3)
+        {
+            this.button[1].check.alpha = (this.time - 4.3) * 2;
+        }
+        if (this.time > 4.6)
+        {
+            this.button[2].check.alpha = (this.time - 4.6) * 2;
+        }
+        if (this.time > 5)
+        {
+            this.button[0].text.alpha = (this.time - 5) * 2;
+        }
+        if (this.time > 5.3)
+        {
+            this.button[1].text.alpha = (this.time - 5.3) * 2;
+        }
+        if (this.time > 5.6)
+        {
+            this.button[2].text.alpha = (this.time - 5.6) * 2;
+        }
     }
 }
 
@@ -65,8 +131,8 @@ let inGame =
 {
     preload : function()
     {
-        game.load.image('body', 'src/assets/sprites/body.png');
-        game.load.image('tail', 'src/assets/sprites/tail.png');
+        game.load.image('body', 'src/assets/sprites/inGame/body.png');
+        game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
         game.load.image('background', 'src/assets/sprites/background.jpg');
     },
 
@@ -373,7 +439,8 @@ socket.on("update", function(data)
         foodChain = data.room.foodchain;
         status = data.room.status;
     }
-    Enemy.getDataFromServer(data.users);
+    if (game.state.current != 'main')
+        Enemy.getDataFromServer(data.users);
 });
 socket.on("died", () => {
     player.body.alpha = 0.5;
