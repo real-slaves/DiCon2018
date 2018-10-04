@@ -7,6 +7,7 @@ let player = {};
 
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
+let mapSize = {x:2400, y:2400};
 let isFirst = true;
 
 // Scene
@@ -56,7 +57,7 @@ let main =
         this.button[2] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 160, 'check'),
             text:game.add.button(screenWidth/2 - 50, screenHeight/2 + 160, 'text3', () => {
-                if (this.time >= 6.1 && this.goToWaiting === 0)
+                if (this.time >= 3.3 && this.goToWaiting === 0)
                 {
                     this.goToWaiting = this.time;
                 }
@@ -85,13 +86,13 @@ let main =
     {
         if (this.goToWaiting !== 0)
         {
-            let alpha = 1 - (((this.time - this.goToWaiting) * 2 > 1) ? 1 : (this.time - this.goToWaiting) * 2);
+            let alpha = 1 - (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
             this.logo.alpha = alpha;
             this.button[0].check.alpha = alpha; this.button[0].text.alpha = alpha;
             this.button[1].check.alpha = alpha; this.button[1].text.alpha = alpha;
             this.button[2].check.alpha = alpha; this.button[2].text.alpha = alpha;
             this.madeBy.alpha = alpha;
-            if (this.time - this.goToWaiting > 1)
+            if (this.time - this.goToWaiting > 0.5)
             {
                 roomid = -1;
                 game.state.start('waiting');
@@ -99,21 +100,21 @@ let main =
         }
         else
         {
-            this.logo.alpha = (0 > (this.time / 2) - 0.5) ? 0 : this.time / 2 - 0.5;
+            this.logo.alpha = (0 > (this.time) - 0.5) ? 0 : this.time- 0.5;
+            if (this.time > 1.5)
+                this.logo.position.y = (screenHeight / 2 - 120 < screenHeight / 2 - (this.time - 1.5) * 240) ? (screenHeight / 2 - (this.time - 1.5) * 240) : (screenHeight / 2 - 120);
+            if (this.time > 2)
+                this.button[0].check.alpha = (this.time - 2) * 2;
+            if (this.time > 2.2)
+                this.button[1].check.alpha = (this.time - 2.2) * 2;
+            if (this.time > 2.4)
+                this.button[2].check.alpha = (this.time - 2.4) * 2;
+            if (this.time > 2.6)
+                this.button[0].text.alpha = (this.time - 2.6) * 2;
+            if (this.time > 2.8)
+                this.button[1].text.alpha = (this.time - 2.8) * 2;
             if (this.time > 3)
-                this.logo.position.y = (screenHeight / 2 - 120 < screenHeight / 2 - (this.time - 3) * 120) ? (screenHeight / 2 - (this.time - 3) * 120) : (screenHeight / 2 - 120);
-            if (this.time > 4)
-                this.button[0].check.alpha = (this.time - 4) * 2;
-            if (this.time > 4.3)
-                this.button[1].check.alpha = (this.time - 4.3) * 2;
-            if (this.time > 4.6)
-                this.button[2].check.alpha = (this.time - 4.6) * 2;
-            if (this.time > 5)
-                this.button[0].text.alpha = (this.time - 5) * 2;
-            if (this.time > 5.3)
-                this.button[1].text.alpha = (this.time - 5.3) * 2;
-            if (this.time > 5.6)
-                this.button[2].text.alpha = (this.time - 5.6) * 2;
+                this.button[2].text.alpha = (this.time - 3) * 2;
         }
     }
 }
@@ -157,8 +158,8 @@ let inGame =
     create : function()
     {
         game.physics.startSystem(Phaser.Physics.ARCADE);    
-        game.add.tileSprite(0, 0, 2000, 2000, 'background'); 
-        game.world.setBounds(0, 0, 1000, 1000);
+        game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background'); 
+        game.world.setBounds(0, 0, mapSize.x, mapSize.y);
     
         player = new Player();
         player.body.tint = 0x2EFE2E;
@@ -198,6 +199,7 @@ class Player
         this.body = game.add.sprite(game.world.centerX, game.world.centerY, 'body');
         this.body.anchor.setTo(0.5, 0.5);
         this.bounce = {x:0, y:0};
+        this.isDead = false;
 
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
@@ -226,6 +228,7 @@ class Player
     update()
     {
         this.move();
+        this.worldBound();
         this.tailCollision();
         if (status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
             this.emitDataToServer();
@@ -247,21 +250,21 @@ class Player
         
         if (Util.distance(x1, y1, x2, y2) <= this.body.width)
         {
-            this.body.body.velocity.x = speed * Math.cos(this.lastAngle) + this.bounce.x;
-            this.body.body.velocity.y = speed * Math.sin(this.lastAngle) + this.bounce.y;
+            this.body.body.velocity.x = speed * Math.cos(this.lastAngle);
+            this.body.body.velocity.y = speed * Math.sin(this.lastAngle);
             this.body.rotation = this.lastAngle;
         }
         else
         {
-            if (Math.abs(this.lastAngle - angle) > Math.PI * game.time.physicsElapsed)
+            if (Math.abs(this.lastAngle - angle) > 1.5 * Math.PI * game.time.physicsElapsed)
             {
                 let angle2 = (angle - this.lastAngle);
 
                 if (angle2 < -Math.PI) angle2 += 2 * Math.PI;
                 else if (angle2 > Math.PI) angle2 -= 2 * Math.PI;
 
-                if (angle2 < 0) angle = this.lastAngle - Math.PI * game.time.physicsElapsed;
-                else angle = this.lastAngle + Math.PI * game.time.physicsElapsed;
+                if (angle2 < 0) angle = this.lastAngle - (1.5 * Math.PI * game.time.physicsElapsed);
+                else angle = this.lastAngle + (1.5 * Math.PI * game.time.physicsElapsed);
             }
             this.lastAngle = angle;
 
@@ -270,10 +273,30 @@ class Player
             this.body.rotation = angle;
         }
 
-        this.bounce.x -= game.time.physicsElapsed * 1000;
-        this.bounce.y -= game.time.physicsElapsed * 1000;
-        if (this.bounce.x < 0) this.bounce.x = 0;
-        if (this.bounce.y < 0) this.bounce.y = 0;
+        this.body.body.velocity.x += this.bounce.x;
+        this.body.body.velocity.y += this.bounce.y;
+
+        if (this.bounce.x > 0)
+        {
+            this.bounce.x -= game.time.physicsElapsed * 1000;
+            if (this.bounce.x < 0) this.bounce.x = 0;
+        }
+        else if (this.bounce.x < 0)
+        {
+            this.bounce.x += game.time.physicsElapsed * 1000;
+            if (this.bounce.x > 0) this.bounce.x = 0;
+        }
+        
+        if (this.bounce.y > 0)
+        {
+            this.bounce.y -= game.time.physicsElapsed * 1000;
+            if (this.bounce.y < 0) this.bounce.y = 0;
+        }
+        else if (this.bounce.y < 0)
+        {
+            this.bounce.y += game.time.physicsElapsed * 1000;
+            if (this.bounce.y > 0) this.bounce.y = 0;
+        }
     
         // Tail Move
         for (let i = 0; i < this.tail.length; i++)
@@ -342,8 +365,8 @@ class Player
                 }
                 else if (foodChain.findIndex(chain => chain.hunter === socket.id) !== -1)
                 {
-                    player.bounce.x = 1000 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
-                    player.bounce.y = 1000 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                    player.bounce.x = 700 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                    player.bounce.y = 700 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
                 }
             }
         }
@@ -364,6 +387,30 @@ class Player
         }
     }
 
+    worldBound()
+    {
+        if (player.body.position.x < 0)
+        {
+            player.bounce.x = 800;
+            player.body.position.x = 5;
+        }
+        else if (player.body.position.x > mapSize.x)
+        {
+            player.bounce.x = -800;
+            player.body.position.x = mapSize.x - 5;
+        }
+        else if (player.body.position.y < 0)
+        {
+            player.bounce.y = 800;
+            player.body.position.y = 5;
+        }
+        else if (player.body.position.y > mapSize.y)
+        {
+            player.bounce.y = -800;
+            player.body.position.y = mapSize.y - 5;
+        }
+    }
+
     emitDataToServer()
     {
         let data = {
@@ -371,7 +418,8 @@ class Player
             y:this.body.position.y,
             rotation:this.body.rotation,
             tail:[],
-            roomid: roomid
+            roomid: roomid,
+            isDead: player.isDead
         };
         this.tail.forEach(tail => {
             data.tail.push({
@@ -461,6 +509,7 @@ socket.on("update", function(data)
         Enemy.getDataFromServer(data.users);
 });
 socket.on("died", () => {
+    player.isDead = true;
     player.body.alpha = 0.5;
     player.body.tint = 0x999999;
     player.tail.forEach(tail => {
