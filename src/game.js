@@ -3,7 +3,9 @@ let foodChain = [];
 let enemiesData = [];
 let roomid = -3;
 let status = 0;
+
 let player = {};
+let leftEnemyText;
 
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
@@ -95,6 +97,7 @@ let main =
             if (this.time - this.goToWaiting > 0.5)
             {
                 roomid = -1;
+                socket.emit('join');
                 game.state.start('waiting');
             }
         }
@@ -153,6 +156,7 @@ let inGame =
         game.load.image('body', 'src/assets/sprites/inGame/body.png');
         game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
         game.load.image('background', 'src/assets/sprites/background.jpg');
+        game.load.image('leftEnemy', 'src/assets/sprites/inGame/leftEnemy.png');
     },
 
     create : function()
@@ -160,7 +164,12 @@ let inGame =
         game.physics.startSystem(Phaser.Physics.ARCADE);    
         game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background'); 
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
-    
+
+        leftEnemy = game.add.image(screenWidth - 150, 20, 'leftEnemy').fixedToCamera = true;
+        let style = { font: "100px Arial", fill: "#ffffff", boundsAlignH: "center", boundsAlignV: "middle" };
+        leftEnemyText = game.add.text(screenWidth - 112, 36, "0", style);
+        leftEnemyText.fixedToCamera = true;
+
         player = new Player();
         player.body.tint = 0x2EFE2E;
         for (let i = 0; i < 4; i++)
@@ -239,7 +248,12 @@ class Player
         let defaultSpeed = 300;
         let speed = defaultSpeed;
         if (game.input.activePointer.leftButton.isDown)
-            speed = 600;
+        {
+            if (player.isDead)
+                speed = 800;
+            else
+                speed = 600;
+        }
     
         // Body Move
         let x1 = this.body.position.x + this.body.width / 2;
@@ -256,7 +270,7 @@ class Player
         }
         else
         {
-            if (Math.abs(this.lastAngle - angle) > 1.5 * Math.PI * game.time.physicsElapsed)
+            if (!player.isDead && Math.abs(this.lastAngle - angle) > 1.5 * Math.PI * game.time.physicsElapsed)
             {
                 let angle2 = (angle - this.lastAngle);
 
@@ -344,7 +358,6 @@ class Player
 
                 if (tailIndex != -1)
                 {
-                    enemy.tail[tailIndex].tint = 0xff0000;
                     collision(enemy, enemy.tail[tailIndex]);
                 }
             })
@@ -391,22 +404,22 @@ class Player
     {
         if (player.body.position.x < 0)
         {
-            player.bounce.x = 800;
+            player.bounce.x = 700;
             player.body.position.x = 5;
         }
         else if (player.body.position.x > mapSize.x)
         {
-            player.bounce.x = -800;
+            player.bounce.x = -700;
             player.body.position.x = mapSize.x - 5;
         }
         else if (player.body.position.y < 0)
         {
-            player.bounce.y = 800;
+            player.bounce.y = 700;
             player.body.position.y = 5;
         }
         else if (player.body.position.y > mapSize.y)
         {
-            player.bounce.y = -800;
+            player.bounce.y = -700;
             player.body.position.y = mapSize.y - 5;
         }
     }
@@ -453,7 +466,7 @@ class Enemy
                 tail.destroy();
             });
         });
-        enemiesData = [];
+        enemiesData = []; 
 
         // Save User's roomid
         roomid = enemies.find(enemy => enemy.id == socket.id).roomid;
@@ -470,7 +483,9 @@ class Enemy
                     enemiesData[enemiesData.push(new Enemy()) - 1].getDataEach(enemy);
                 }
             });
-        }   
+        }
+
+        leftEnemyText.text = enemiesData.length.toString();
     }
 
     getDataEach(data)
@@ -529,4 +544,4 @@ game.state.add('inGame', inGame);
 game.state.add('waiting', waiting);
 game.state.add('main', main);
 
-game.state.start('main');
+game.state.start('inGame');
