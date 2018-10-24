@@ -4,6 +4,7 @@ let enemiesData = [];
 let roomid = -3;
 let status = 0;
 
+let blocks = [];
 let player = {};
 let leftEnemyText;
 
@@ -100,7 +101,7 @@ let main =
 
         emitter.x = player.body.position.x;
         emitter.y = player.body.position.y;
-        emitter.start(true, 1500, null, 25);
+        emitter.start(true, 1500, null, 10);
     },
 
     update : function()
@@ -207,13 +208,11 @@ let inGame =
         for (let i = 0; i < 4; i++)
             player.addTail();
 
-        this.blocks = [];
+        blocks.forEach(value => value.destroy());
+        blocks = [];
 
         this.time = 0;
         this.fade = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'fade');
-
-        for (let i = 0; i < 40; i++)
-            this.createBlock();
 
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
@@ -225,7 +224,7 @@ let inGame =
 
         emitter.x = player.body.position.x;
         emitter.y = player.body.position.y;
-        emitter.start(true, 1500, null, 25);
+        emitter.start(true, 1500, null, 10);
     },
 
     update : function()
@@ -258,17 +257,9 @@ let inGame =
         this.fade.alpha = 1 - ((this.time >= 0.5) ? 1 : (this.time / 0.5));
     },
 
-    createBlock : function()
-    {
-        this.blocks.push(game.add.image(game.rnd.integerInRange(0, mapSize.x), game.rnd.integerInRange(0, mapSize.y), 'block'));
-        this.blocks[this.blocks.length - 1].rotation = game.rnd.realInRange(0, 2 * Math.PI);
-        this.blocks[this.blocks.length - 1].scale.setTo(game.rnd.realInRange(0.5, 1.5), game.rnd.realInRange(0.5, 1.5));
-        this.blocks[this.blocks.length - 1].anchor.setTo(0.5);
-    },
-
     blockCollision : function()
     {
-        this.blocks.filter(element => Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2)).forEach(element => {
+        blocks.filter(element => Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2)).forEach(element => {
             let angle = Math.atan2(player.body.position.y - element.position.y, player.body.position.x - element.position.x) - element.rotation;
             let playerX = element.position.x + Math.cos(angle) * Util.distance(player.body.position, element.position);
             let playerY = element.position.y + Math.sin(angle) * Util.distance(player.body.position, element.position);
@@ -279,24 +270,24 @@ let inGame =
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI / 4);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI / 4);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI / 4);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI / 4);
                     }
                 }
                 else if (playerX <= element.position.x - element.width / 2) // left
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 3 / 4);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 3 / 4);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 3 / 4);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 3 / 4);
                     }
                 }
                 else // middle
                 {
                     if (playerY <= element.position.y + element.height / 2 + player.body.width / 2)
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI / 2);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI / 2);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI / 2);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI / 2);
                     }
                 }
             }
@@ -306,24 +297,24 @@ let inGame =
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 7 / 4);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 7 / 4);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 7 / 4);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 7 / 4);
                     }
                 }
                 else if (playerX <= element.position.x - element.width / 2) // left
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 5 / 4);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 5 / 4);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 5 / 4);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 5 / 4);
                     }
                 }
                 else // middle
                 {
                     if (playerY >= element.position.y - element.height / 2 - player.body.width / 2)
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 3 / 2);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 3 / 2);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 3 / 2);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 3 / 2);
                     }
                 }
             }
@@ -333,16 +324,16 @@ let inGame =
                 {
                     if (playerX <= element.position.x + element.width / 2 + player.body.width / 2)
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation);
-                        player.bounce.y = 700 * Math.sin(element.rotation);
+                        player.bounce.x = 500 * Math.cos(element.rotation);
+                        player.bounce.y = 500 * Math.sin(element.rotation);
                     }
                 }
                 else if (playerX <= element.position.x - element.width / 2) // left
                 {
                     if (playerX >= element.position.x - element.width / 2 - player.body.width / 2)
                     {
-                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI);
-                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI);
+                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI);
+                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI);
                     }
                 }
             }
@@ -361,6 +352,7 @@ class Player
         this.body.anchor.setTo(0.5, 0.5);
         this.bounce = {x:0, y:0};
         this.isDead = false;
+        this.collisionCool = 0;
 
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
@@ -368,29 +360,38 @@ class Player
 
     addTail()
     {
-        // Create Tail
-        if (this.tail.length == 0)
-            this.tail.push(game.add.sprite(this.body.position.x + this.body.width * 2, this.body.position.y, 'tail'));
-        else
-            this.tail.push(game.add.sprite(this.tail[this.tail.length - 1].body.position.x, this.tail[this.tail.length - 1].body.position.y, 'tail'));
-    
-        let newTail = this.tail[this.tail.length - 1];
+        if (this.tail.length < 12)
+        {
+            // Create Tail
+            if (this.tail.length == 0)
+                this.tail.push(game.add.sprite(this.body.position.x + this.body.width * 2, this.body.position.y, 'tail'));
+            else
+                this.tail.push(game.add.sprite(this.tail[this.tail.length - 1].body.position.x, this.tail[this.tail.length - 1].body.position.y, 'tail'));
+        
+            let newTail = this.tail[this.tail.length - 1];
 
-        newTail.anchor.setTo(0.5, 0.5);
-        newTail.tint = 0x2EFE2E;
-        game.physics.arcade.enable(newTail);
-    
-        // Set Tails's Scale
-        this.tail.forEach((tail, index) => {
-            tail.scale.setTo(0.2 + (this.tail.length - index - 1) * 0.8 / (this.tail.length));
-        })
+            newTail.anchor.setTo(0.5, 0.5);
+            newTail.tint = 0x2EFE2E;
+            game.physics.arcade.enable(newTail);
+        
+            // Set Tails's Scale
+            this.tail.forEach((tail, index) => {
+                tail.scale.setTo(0.2 + (this.tail.length - index - 1) * 0.8 / (this.tail.length));
+            })
+        }
     }
     
     update()
     {
         this.move();
         this.worldBound();
-        this.tailCollision();
+
+        this.collisionCool += game.time.physicsElapsed;
+        if (this.collisionCool >= 0.04)
+        {
+            this.tailCollision();
+            this.collisionCool -= 0.04;
+        }
         if (status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
             this.emitDataToServer();
     }
@@ -690,16 +691,24 @@ socket.on("died", (data) => {
     }
     emitter.x = data.x;
     emitter.y = data.y;
-    emitter.start(true, 1500, null, 25);
+    emitter.start(true, 1500, null, 10);
 });
 socket.on("gameEnd", (value) => {
     roomid = -2;
     player.gameEnd(value);
 });
 socket.on("addTail", () => {
-    console.log(1);
     if (game.state.current == 'inGame')
-        player.addTail();
+        if (Math.random() >= 0.5)
+            player.addTail();
+});
+socket.on("gameStart", (data) => {
+    data.objects.forEach((value, index) => {
+        blocks.push(game.add.image(value.x, value.y, 'block'));
+        blocks[index].rotation = value.rotation;
+        blocks[index].scale.setTo(value.size);
+        blocks[index].anchor.setTo(0.5);
+    })
 });
 
 // Game
