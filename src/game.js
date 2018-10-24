@@ -12,23 +12,37 @@ let screenWidth = innerWidth;
 let mapSize = {x:2400, y:2400};
 let isFirst = true;
 
+var emitter;
+
 // Scene
 let main = 
 {
     preload : function()
     {
         game.load.image('background', 'src/assets/sprites/background.jpg');
+        game.load.image('fade', 'src/assets/sprites/fade.jpg');
+
         game.load.image('logo', 'src/assets/sprites/main/logo.png');
         game.load.image('check', 'src/assets/sprites/main/check.png');
         game.load.image('text1', 'src/assets/sprites/main/text1.png');
         game.load.image('text2', 'src/assets/sprites/main/text2.png');
         game.load.image('text3', 'src/assets/sprites/main/text3.png');
         game.load.image('madeBy', 'src/assets/sprites/main/madeBy.png');
+
+        game.load.image('body', 'src/assets/sprites/inGame/body.png');
+        game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
+
+        game.load.image('particle', 'src/assets/sprites/inGame/particle.png');
     },
 
     create : function()
     {
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
+        player = new Player();
+        player.body.position.x = -10;
+        player.body.position.y = -10;
+
+        for (let i = 0; i < 10; i++) { player.addTail(); player.tail[i].tint = 0xffffff };
 
         if (isFirst)
         {
@@ -72,11 +86,27 @@ let main =
         this.button[0].check.alpha = 0; this.button[0].text.alpha = 0;
         this.button[1].check.alpha = 0; this.button[1].text.alpha = 0;
         this.button[2].check.alpha = 0; this.button[2].text.alpha = 0;
+
+        this.fade = game.add.tileSprite(0, 0, 2000, 2000, 'fade');
+        this.fade.alpha = 0;
+
+        emitter = game.add.emitter(0, 0, 75);
+        emitter.makeParticles('particle');
+        emitter.setAlpha(1, 0, 1000);
+        emitter.minParticleSpeed.setTo(-250, -250);
+        emitter.maxParticleSpeed.setTo(250, 250);
+        emitter.minParticleScale = 0.5;
+        emitter.maxParticleScale = 1.2;
+
+        emitter.x = player.body.position.x;
+        emitter.y = player.body.position.y;
+        emitter.start(true, 1500, null, 25);
     },
 
     update : function()
     {
         this.time += game.time.physicsElapsed;
+        player.update();
         this.animation();
     },
 
@@ -88,16 +118,11 @@ let main =
     {
         if (this.goToWaiting !== 0)
         {
-            let alpha = 1 - (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
-            this.logo.alpha = alpha;
-            this.button[0].check.alpha = alpha; this.button[0].text.alpha = alpha;
-            this.button[1].check.alpha = alpha; this.button[1].text.alpha = alpha;
-            this.button[2].check.alpha = alpha; this.button[2].text.alpha = alpha;
-            this.madeBy.alpha = alpha;
+            this.fade.alpha = (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
             if (this.time - this.goToWaiting > 0.5)
             {
                 roomid = -1;
-                socket.emit('join');
+                socket.emit('join', {access: 1});
                 game.state.start('waiting');
             }
         }
@@ -126,7 +151,7 @@ let waiting =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/background.jpg');
+        game.load.image('background', 'src/assets/sprites/fade.jpg');
     },
 
     create : function()
@@ -153,10 +178,17 @@ let inGame =
 {
     preload : function()
     {
+        game.load.image('background', 'src/assets/sprites/background.jpg');
+        game.load.image('fade', 'src/assets/sprites/fade.jpg');
+
         game.load.image('body', 'src/assets/sprites/inGame/body.png');
         game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
-        game.load.image('background', 'src/assets/sprites/background.jpg');
+
         game.load.image('leftEnemy', 'src/assets/sprites/inGame/leftEnemy.png');
+
+        game.load.image('block', 'src/assets/sprites/inGame/block.png');
+
+        game.load.image('particle', 'src/assets/sprites/inGame/particle.png');
     },
 
     create : function()
@@ -174,27 +206,147 @@ let inGame =
         player.body.tint = 0x2EFE2E;
         for (let i = 0; i < 4; i++)
             player.addTail();
+
+        this.blocks = [];
+
+        this.time = 0;
+        this.fade = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'fade');
+
+        for (let i = 0; i < 40; i++)
+            this.createBlock();
+
+        emitter = game.add.emitter(0, 0, 75);
+        emitter.makeParticles('particle');
+        emitter.setAlpha(1, 0, 1000);
+        emitter.minParticleSpeed.setTo(-250, -250);
+        emitter.maxParticleSpeed.setTo(250, 250);
+        emitter.minParticleScale = 0.5;
+        emitter.maxParticleScale = 1.2;
+
+        emitter.x = player.body.position.x;
+        emitter.y = player.body.position.y;
+        emitter.start(true, 1500, null, 25);
     },
 
     update : function()
     {
+        this.time += game.time.physicsElapsed;
+
         player.update();
 
         this.backWaiting();
+        this.blockCollision();
+        this.animaiton();
     },
 
     render : function()
     {
-        game.debug.text(1 / game.time.physicsElapsed, 32, 32);
     },
 
     backWaiting : function()
     {
-        if (game.input.activePointer.leftButton.isDown && roomid === -2)
+        if (game.input.activePointer.leftButton.justPressed(100) && roomid === -2)
         {
             roomid = -1;
             game.state.start('waiting');
+            socket.emit('join', {access: 1});
         }
+    },
+
+    animaiton : function()
+    {
+        this.fade.alpha = 1 - ((this.time >= 0.5) ? 1 : (this.time / 0.5));
+    },
+
+    createBlock : function()
+    {
+        this.blocks.push(game.add.image(game.rnd.integerInRange(0, mapSize.x), game.rnd.integerInRange(0, mapSize.y), 'block'));
+        this.blocks[this.blocks.length - 1].rotation = game.rnd.realInRange(0, 2 * Math.PI);
+        this.blocks[this.blocks.length - 1].scale.setTo(game.rnd.realInRange(0.5, 1.5), game.rnd.realInRange(0.5, 1.5));
+        this.blocks[this.blocks.length - 1].anchor.setTo(0.5);
+    },
+
+    blockCollision : function()
+    {
+        this.blocks.filter(element => Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2)).forEach(element => {
+            let angle = Math.atan2(player.body.position.y - element.position.y, player.body.position.x - element.position.x) - element.rotation;
+            let playerX = element.position.x + Math.cos(angle) * Util.distance(player.body.position, element.position);
+            let playerY = element.position.y + Math.sin(angle) * Util.distance(player.body.position, element.position);
+
+            if (playerY >= element.position.y + element.height / 2) // bottom
+            {
+                if (playerX >= element.position.x + element.width / 2) // right
+                {
+                    if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI / 4);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI / 4);
+                    }
+                }
+                else if (playerX <= element.position.x - element.width / 2) // left
+                {
+                    if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 3 / 4);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 3 / 4);
+                    }
+                }
+                else // middle
+                {
+                    if (playerY <= element.position.y + element.height / 2 + player.body.width / 2)
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI / 2);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI / 2);
+                    }
+                }
+            }
+            else if (playerY <= element.position.y - element.height / 2) // top
+            {
+                if (playerX >= element.position.x + element.width / 2) // right
+                {
+                    if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 7 / 4);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 7 / 4);
+                    }
+                }
+                else if (playerX <= element.position.x - element.width / 2) // left
+                {
+                    if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 5 / 4);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 5 / 4);
+                    }
+                }
+                else // middle
+                {
+                    if (playerY >= element.position.y - element.height / 2 - player.body.width / 2)
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI * 3 / 2);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI * 3 / 2);
+                    }
+                }
+            }
+            else // middle
+            {
+                if (playerX >= element.position.x + element.width / 2) // right
+                {
+                    if (playerX <= element.position.x + element.width / 2 + player.body.width / 2)
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation);
+                        player.bounce.y = 700 * Math.sin(element.rotation);
+                    }
+                }
+                else if (playerX <= element.position.x - element.width / 2) // left
+                {
+                    if (playerX >= element.position.x - element.width / 2 - player.body.width / 2)
+                    {
+                        player.bounce.x = 700 * Math.cos(element.rotation + Math.PI);
+                        player.bounce.y = 700 * Math.sin(element.rotation + Math.PI);
+                    }
+                }
+            }
+        });
     }
 }
 
@@ -380,6 +532,8 @@ class Player
                 {
                     player.bounce.x = 700 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
                     player.bounce.y = 700 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+
+                    socket.emit('addTail', {target:enemy.id});
                 }
             }
         }
@@ -407,20 +561,20 @@ class Player
             player.bounce.x = 700;
             player.body.position.x = 5;
         }
-        else if (player.body.position.x > mapSize.x)
+        else if (player.body.position.x > ((game.state.current == 'inGame') ? mapSize.x : screenWidth))
         {
             player.bounce.x = -700;
-            player.body.position.x = mapSize.x - 5;
+            player.body.position.x = ((game.state.current == 'inGame') ? mapSize.x : screenWidth) - 5;
         }
         else if (player.body.position.y < 0)
         {
             player.bounce.y = 700;
             player.body.position.y = 5;
         }
-        else if (player.body.position.y > mapSize.y)
+        else if (player.body.position.y > ((game.state.current == 'inGame') ? mapSize.y : screenHeight))
         {
             player.bounce.y = -700;
-            player.body.position.y = mapSize.y - 5;
+            player.body.position.y = ((game.state.current == 'inGame') ? mapSize.y : screenHeight) - 5;
         }
     }
 
@@ -485,7 +639,7 @@ class Enemy
             });
         }
 
-        leftEnemyText.text = enemiesData.length.toString();
+        leftEnemyText.text = (enemiesData.length + 1).toString();
     }
 
     getDataEach(data)
@@ -523,19 +677,30 @@ socket.on("update", function(data)
     if (game.state.current != 'main')
         Enemy.getDataFromServer(data.users);
 });
-socket.on("died", () => {
-    player.isDead = true;
-    player.body.alpha = 0.5;
-    player.body.tint = 0x999999;
-    player.tail.forEach(tail => {
-        tail.alpha = 0.5;
-        tail.tint = 0x999999;
-    })
+socket.on("died", (data) => {
+    if (data.id == socket.id)
+    {
+        player.isDead = true;
+        player.body.alpha = 0.5;
+        player.body.tint = 0x999999;
+        player.tail.forEach(tail => {
+            tail.alpha = 0.5;
+            tail.tint = 0x999999;
+        })
+    }
+    emitter.x = data.x;
+    emitter.y = data.y;
+    emitter.start(true, 1500, null, 25);
 });
 socket.on("gameEnd", (value) => {
     roomid = -2;
     player.gameEnd(value);
-})
+});
+socket.on("addTail", () => {
+    console.log(1);
+    if (game.state.current == 'inGame')
+        player.addTail();
+});
 
 // Game
 let game = new Phaser.Game(screenWidth, screenHeight, Phaser.CANVAS);
@@ -544,4 +709,4 @@ game.state.add('inGame', inGame);
 game.state.add('waiting', waiting);
 game.state.add('main', main);
 
-game.state.start('inGame');
+game.state.start('main');
