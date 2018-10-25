@@ -20,20 +20,20 @@ let main =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/background.jpg');
-        game.load.image('fade', 'src/assets/sprites/fade.jpg');
+        game.load.image('background', 'src/assets/sprites/background/background.jpg');
+        game.load.image('fade', 'src/assets/sprites/background/fade.jpg');
 
-        game.load.image('logo', 'src/assets/sprites/main/logo.png');
-        game.load.image('check', 'src/assets/sprites/main/check.png');
-        game.load.image('text1', 'src/assets/sprites/main/text1.png');
-        game.load.image('text2', 'src/assets/sprites/main/text2.png');
-        game.load.image('text3', 'src/assets/sprites/main/text3.png');
-        game.load.image('madeBy', 'src/assets/sprites/main/madeBy.png');
+        game.load.image('logo', 'src/assets/sprites/UI/logo.png');
+        game.load.image('check', 'src/assets/sprites/UI/check.png');
+        game.load.image('text1', 'src/assets/sprites/UI/text1.png');
+        game.load.image('text2', 'src/assets/sprites/UI/text2.png');
+        game.load.image('text3', 'src/assets/sprites/UI/text3.png');
+        game.load.image('madeBy', 'src/assets/sprites/UI/madeBy.png');
 
-        game.load.image('body', 'src/assets/sprites/inGame/body.png');
-        game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
+        game.load.image('body', 'src/assets/sprites/object/player/body.png');
+        game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
 
-        game.load.image('particle', 'src/assets/sprites/inGame/particle.png');
+        game.load.image('particle', 'src/assets/sprites/particle/particle.png');
     },
 
     create : function()
@@ -152,7 +152,7 @@ let waiting =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/fade.jpg');
+        game.load.image('background', 'src/assets/sprites/background/fade.jpg');
     },
 
     create : function()
@@ -179,17 +179,18 @@ let inGame =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/background.jpg');
-        game.load.image('fade', 'src/assets/sprites/fade.jpg');
+        game.load.image('background', 'src/assets/sprites/background/background.jpg');
+        game.load.image('fade', 'src/assets/sprites/background/fade.jpg');
 
-        game.load.image('body', 'src/assets/sprites/inGame/body.png');
-        game.load.image('tail', 'src/assets/sprites/inGame/tail.png');
+        game.load.image('body', 'src/assets/sprites/object/player/body.png');
+        game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
 
-        game.load.image('leftEnemy', 'src/assets/sprites/inGame/leftEnemy.png');
+        game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
 
-        game.load.image('block', 'src/assets/sprites/inGame/block.png');
+        game.load.image('block', 'src/assets/sprites/object//blocks/block.png');
+        game.load.image('breakableBlock', 'src/assets/sprites/object//blocks/breakableBlock.png');
 
-        game.load.image('particle', 'src/assets/sprites/inGame/particle.png');
+        game.load.image('particle', 'src/assets/sprites/particle/particle.png');
     },
 
     create : function()
@@ -264,76 +265,76 @@ let inGame =
             let playerX = element.position.x + Math.cos(angle) * Util.distance(player.body.position, element.position);
             let playerY = element.position.y + Math.sin(angle) * Util.distance(player.body.position, element.position);
 
-            if (playerY >= element.position.y + element.height / 2) // bottom
+            if (playerY >= element.position.y + element.height * 2 / 5) // bottom
             {
-                if (playerX >= element.position.x + element.width / 2) // right
+                if (playerX >= element.position.x + element.width * 2 / 5) // right
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI / 4);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI / 4);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 4);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 4);
                     }
                 }
-                else if (playerX <= element.position.x - element.width / 2) // left
+                else if (playerX <= element.position.x - element.width * 2 / 5) // left
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 3 / 4);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 3 / 4);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 4);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 4);
                     }
                 }
                 else // middle
                 {
                     if (playerY <= element.position.y + element.height / 2 + player.body.width / 2)
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI / 2);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI / 2);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 2);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 2);
                     }
                 }
             }
-            else if (playerY <= element.position.y - element.height / 2) // top
+            else if (playerY <= element.position.y - element.height * 2 / 5) // top
             {
-                if (playerX >= element.position.x + element.width / 2) // right
+                if (playerX >= element.position.x + element.width * 2 / 5) // right
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 7 / 4);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 7 / 4);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 7 / 4);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 7 / 4);
                     }
                 }
-                else if (playerX <= element.position.x - element.width / 2) // left
+                else if (playerX <= element.position.x - element.width * 2 / 5) // left
                 {
                     if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 5 / 4);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 5 / 4);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 5 / 4);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 5 / 4);
                     }
                 }
                 else // middle
                 {
                     if (playerY >= element.position.y - element.height / 2 - player.body.width / 2)
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI * 3 / 2);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI * 3 / 2);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 2);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 2);
                     }
                 }
             }
             else // middle
             {
-                if (playerX >= element.position.x + element.width / 2) // right
+                if (playerX >= element.position.x + element.width * 2 / 5) // right
                 {
                     if (playerX <= element.position.x + element.width / 2 + player.body.width / 2)
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation);
-                        player.bounce.y = 500 * Math.sin(element.rotation);
+                        player.bounce.x = 1000 * Math.cos(element.rotation);
+                        player.bounce.y = 1000 * Math.sin(element.rotation);
                     }
                 }
-                else if (playerX <= element.position.x - element.width / 2) // left
+                else if (playerX <= element.position.x - element.width * 2 / 5) // left
                 {
                     if (playerX >= element.position.x - element.width / 2 - player.body.width / 2)
                     {
-                        player.bounce.x = 500 * Math.cos(element.rotation + Math.PI);
-                        player.bounce.y = 500 * Math.sin(element.rotation + Math.PI);
+                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI);
+                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI);
                     }
                 }
             }
@@ -371,7 +372,13 @@ class Player
             let newTail = this.tail[this.tail.length - 1];
 
             newTail.anchor.setTo(0.5, 0.5);
-            newTail.tint = 0x2EFE2E;
+            if (this.isDead)
+            {
+                newTail.alpha = 0.5;
+                newTail.tint = 0x999999;
+            }
+            else
+                newTail.tint = 0x2EFE2E;
             game.physics.arcade.enable(newTail);
         
             // Set Tails's Scale
@@ -435,13 +442,16 @@ class Player
             }
             this.lastAngle = angle;
 
-            this.body.body.velocity.x = speed * Math.cos(angle) + this.bounce.x;
-            this.body.body.velocity.y = speed * Math.sin(angle) + this.bounce.y;
+            this.body.body.velocity.x = speed * Math.cos(angle);
+            this.body.body.velocity.y = speed * Math.sin(angle);
             this.body.rotation = angle;
         }
 
-        this.body.body.velocity.x += this.bounce.x;
-        this.body.body.velocity.y += this.bounce.y;
+        if (!this.isDead)
+        {
+            this.body.body.velocity.x += this.bounce.x;
+            this.body.body.velocity.y += this.bounce.y;
+        }
 
         if (this.bounce.x > 0)
         {
@@ -531,8 +541,8 @@ class Player
                 }
                 else if (foodChain.findIndex(chain => chain.hunter === socket.id) !== -1)
                 {
-                    player.bounce.x = 700 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
-                    player.bounce.y = 700 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                    player.bounce.x = 1200 * Math.cos(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
+                    player.bounce.y = 1200 * Math.sin(game.physics.arcade.angleBetween(collideTail.position, player.body.position));
 
                     socket.emit('addTail', {target:enemy.id});
                 }
@@ -559,22 +569,22 @@ class Player
     {
         if (player.body.position.x < 0)
         {
-            player.bounce.x = 700;
+            player.bounce.x = 1200;
             player.body.position.x = 5;
         }
         else if (player.body.position.x > ((game.state.current == 'inGame') ? mapSize.x : screenWidth))
         {
-            player.bounce.x = -700;
+            player.bounce.x = -1200;
             player.body.position.x = ((game.state.current == 'inGame') ? mapSize.x : screenWidth) - 5;
         }
         else if (player.body.position.y < 0)
         {
-            player.bounce.y = 700;
+            player.bounce.y = 1200;
             player.body.position.y = 5;
         }
         else if (player.body.position.y > ((game.state.current == 'inGame') ? mapSize.y : screenHeight))
         {
-            player.bounce.y = -700;
+            player.bounce.y = -1200;
             player.body.position.y = ((game.state.current == 'inGame') ? mapSize.y : screenHeight) - 5;
         }
     }
@@ -640,7 +650,7 @@ class Enemy
             });
         }
 
-        leftEnemyText.text = (enemiesData.length + 1).toString();
+        leftEnemyText.text = (enemiesData.length + !player.isDead).toString();
     }
 
     getDataEach(data)
@@ -670,13 +680,35 @@ socket.on("update", function(data)
 {
     if (game.state.current == 'waiting')
         waiting.getDataFromServer();
-    if (game.state.current == 'inGame')
+    if (game.state.current == 'inGame' && roomid !== -2)
     {
         foodChain = data.room.foodchain;
         status = data.room.status;
     }
     if (game.state.current != 'main')
+    {
         Enemy.getDataFromServer(data.users);
+        if (roomid !== -2)
+        {
+            blocks.forEach(value => value.destroy());
+            blocks = [];
+            data.room.objects.forEach((value, index) => {
+                switch(value.type)
+                {
+                    case 0:
+                        blocks.push(game.add.image(value.x, value.y, 'block'));
+                        break;
+                    case 1:
+                        blocks.push(game.add.image(value.x, value.y, 'breakableBlock'));
+                        break;
+                }
+                blocks[index].rotation = value.rotation;
+                blocks[index].scale.setTo(value.size);
+                blocks[index].anchor.setTo(0.5);
+                blocks[index].type = value.type;
+            })
+        }
+    }
 });
 socket.on("died", (data) => {
     if (data.id == socket.id)
@@ -703,12 +735,6 @@ socket.on("addTail", () => {
             player.addTail();
 });
 socket.on("gameStart", (data) => {
-    data.objects.forEach((value, index) => {
-        blocks.push(game.add.image(value.x, value.y, 'block'));
-        blocks[index].rotation = value.rotation;
-        blocks[index].scale.setTo(value.size);
-        blocks[index].anchor.setTo(0.5);
-    })
 });
 
 // Game
