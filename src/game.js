@@ -170,8 +170,10 @@ let waiting =
 
     getDataFromServer : function(data)
     {
-        if (roomid != -1)
+        if (roomid != -1) {
             game.state.start('inGame');
+            document.querySelector("#chat").setAttribute("class", "");
+        }
     }
 }
 
@@ -249,6 +251,7 @@ let inGame =
         {
             roomid = -1;
             game.state.start('waiting');
+            document.querySelector("#chat").setAttribute("class", "hide");
             socket.emit('join', {access: 1});
         }
     },
@@ -684,6 +687,7 @@ socket.on("update", function(data)
     {
         foodChain = data.room.foodchain;
         status = data.room.status;
+        updateChat(data.room.chat);
     }
     if (game.state.current != 'main')
     {
@@ -745,3 +749,23 @@ game.state.add('waiting', waiting);
 game.state.add('main', main);
 
 game.state.start('main');
+
+function postChat() {
+    if (document.getElementById("input").value == "")
+        return;
+    socket.emit("chatPost", {username: "guest", description: document.getElementById("input").value}) ;   
+    document.getElementById("input").value = "";
+}
+
+function updateChat(chat) {
+    let messageUserElement = document.getElementsByClassName("messageUserName");
+    let messageDescriptionElement = document.getElementsByClassName("messageDescription");
+    while(chat.length != document.getElementsByClassName("messageUserName").length) {
+        document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p>: <p class="messageDescription"> </p></div>';
+    }
+
+    chat.forEach((message, index) => {
+        messageUserElement[index].innerHTML = message.username;
+        messageDescriptionElement[index].innerHTML = message.description;
+    });
+}
