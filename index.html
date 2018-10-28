@@ -13,32 +13,25 @@
         }
 
         #chat {
-            width: 20vw;
-            height: 50vh;
+            width: 30vw;
+            height: 22vh;
             position: absolute;
             left: 3vw;
             bottom: 3vw;
             background-color: gray;
             opacity: 0.7; 
-        }
-
-        input, button {
-            position: absolute;
-            left: 0vw;
-            bottom: 0vw;
+            border: 1px solid gray;
         }
 
         input {
-            width: 14vw;
+            position: absolute;
+            left: 0vw;
+            bottom: 0vw;
+            width: 30vw;
+            height: 3vh;
+            box-sizing: border-box;
             background-color: white;
-            border: 1px solid black;
-        }
-
-        button {
-            left: 14vw;
-            width: 6vw;
-            background-color: white;
-            border: 1px solid black;
+            border: none;
         }
 
         p {
@@ -47,16 +40,19 @@
 
         .message {
             font-size: 1.5vw;
+            height: 3vh;
+            margin: 0;
+            padding: 0;
         }
 
         .messageUserName {
             width: 5vw;
-            height: 5vh;
+            height: 3vh;
         }
 
         .messageDescription {
             width: 12vw;
-            height: 5vh;
+            height: 3vh;
             color: white;
         }
 
@@ -67,7 +63,7 @@
 </head>
 <body>
     <div id="chat" class="hide">
-    <input type="text" id="input" onkeypress="if(event.keyCode==13) {postChat(); return false;}"/><button onclick="postChat()">enter</button>
+    <input type="text" id="input" onkeypress="if(event.keyCode==13) {postChat(); return false;}" autofocus/>
     </div>
     <script src="src/game.js"></script>
 </body>
