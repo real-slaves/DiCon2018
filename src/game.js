@@ -3,6 +3,7 @@ let foodChain = [];
 let enemiesData = [];
 let roomid = -3;
 let status = 0;
+let username = "guest";
 
 let blocks = [];
 let player = {};
@@ -634,7 +635,8 @@ class Player
             rotation:this.body.rotation,
             tail:[],
             roomid: roomid,
-            isDead: player.isDead
+            isDead: player.isDead,
+            username: username
         };
         this.tail.forEach(tail => {
             data.tail.push({
@@ -655,6 +657,7 @@ class Enemy
 {
     constructor()
     {
+        this.username = undefined;
         this.body = undefined;
         this.tail = [];
     }
@@ -663,6 +666,7 @@ class Enemy
     {
         // Destroy last data
         enemiesData.forEach(enemy => {
+            enemy.username.destroy();
             enemy.body.destroy();
             enemy.tail.forEach(tail => {
                 tail.destroy();
@@ -693,6 +697,7 @@ class Enemy
     getDataEach(data)
     {
         // Create body
+        this.username = game.add.text(data.x, data.y - 100, data.username);
         this.body = game.add.sprite(data.x, data.y, 'body');
         this.body.rotation = data.rotation;
         this.body.anchor.setTo(0.5, 0.5);
@@ -787,7 +792,7 @@ game.state.start('main');
 function postChat() {
     if (document.getElementById("input").value == "")
         return;
-    socket.emit("chatPost", {username: "guest", description: document.getElementById("input").value}) ;   
+    socket.emit("chatPost", {username: username, description: document.getElementById("input").value}) ;   
     document.getElementById("input").value = "";
 }
 
