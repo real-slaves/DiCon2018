@@ -255,6 +255,9 @@ let inGame =
     {
         if (game.input.activePointer.leftButton.justPressed(100) && roomid === -2)
         {
+            blocks.forEach(value => value.destroy());
+            blocks = [];
+            
             roomid = -1;
             game.state.start('waiting');
             document.querySelector("#chat").setAttribute("class", "hide");
