@@ -795,7 +795,10 @@ function updateChat(chat) {
     let messageUserElement = document.getElementsByClassName("messageUserName");
     let messageDescriptionElement = document.getElementsByClassName("messageDescription");
     while(chat.length != document.getElementsByClassName("messageUserName").length) {
-        document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p>: <p class="messageDescription"> </p></div>';
+        if (chat.length > document.getElementsByClassName("messageUserName").length)
+            document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p>: <p class="messageDescription"> </p></div>';
+        else
+            document.getElementById("chat").removeChild("div")
     }
 
     chat.forEach((message, index) => {
