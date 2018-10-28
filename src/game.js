@@ -38,6 +38,7 @@ let main =
 
     create : function()
     {
+        game.stage.backgroundColor = '#f1f1f1';
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
         player = new Player();
         player.body.position.x = -10;
@@ -157,6 +158,7 @@ let waiting =
 
     create : function()
     {
+        game.stage.backgroundColor = '#f1f1f1';
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
     },
 
@@ -195,6 +197,7 @@ let inGame =
 
     create : function()
     {
+        game.stage.backgroundColor = '#f1f1f1';
         game.physics.startSystem(Phaser.Physics.ARCADE);    
         game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background'); 
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
@@ -213,6 +216,7 @@ let inGame =
         blocks = [];
 
         this.time = 0;
+        this.breakCool = 0;
         this.fade = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'fade');
 
         emitter = game.add.emitter(0, 0, 75);
@@ -231,12 +235,13 @@ let inGame =
     update : function()
     {
         this.time += game.time.physicsElapsed;
+        this.breakCool += game.time.physicsElapsed;
 
         player.update();
 
         this.backWaiting();
-        this.blockCollision();
         this.animaiton();
+        this.blockCollision();
     },
 
     render : function()
@@ -260,81 +265,110 @@ let inGame =
 
     blockCollision : function()
     {
-        blocks.filter(element => Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2)).forEach(element => {
-            let angle = Math.atan2(player.body.position.y - element.position.y, player.body.position.x - element.position.x) - element.rotation;
-            let playerX = element.position.x + Math.cos(angle) * Util.distance(player.body.position, element.position);
-            let playerY = element.position.y + Math.sin(angle) * Util.distance(player.body.position, element.position);
+        blocks.forEach((element, index) => {
+            if (element.type === 0 || element.type === 1)
+            {
+                if (Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2))
+                {
+                    let isCollide = false;
 
-            if (playerY >= element.position.y + element.height * 2 / 5) // bottom
-            {
-                if (playerX >= element.position.x + element.width * 2 / 5) // right
-                {
-                    if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                    let angle = Math.atan2(player.body.position.y - element.position.y, player.body.position.x - element.position.x) - element.rotation;
+                    let playerX = element.position.x + Math.cos(angle) * Util.distance(player.body.position, element.position);
+                    let playerY = element.position.y + Math.sin(angle) * Util.distance(player.body.position, element.position);
+        
+                    if (playerY >= element.position.y + element.height / 5) // bottom
                     {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 4);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 4);
+                        if (playerX >= element.position.x + element.width / 5) // right
+                        {
+                            if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 4);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 4);
+                                isCollide = true;
+                            }
+                        }
+                        else if (playerX <= element.position.x - element.width / 5) // left
+                        {
+                            if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 4);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 4);
+                                isCollide = true;
+                            }
+                        }
+                        else // middle
+                        {
+                            if (playerY <= element.position.y + element.height / 2 + player.body.width / 2)
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 2);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 2);
+                                isCollide = true;
+                            }
+                        }
                     }
-                }
-                else if (playerX <= element.position.x - element.width * 2 / 5) // left
-                {
-                    if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y + element.height / 2) <= Math.pow(player.body.width, 2))
+                    else if (playerY <= element.position.y - element.height / 5) // top
                     {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 4);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 4);
+                        if (playerX >= element.position.x + element.width / 5) // right
+                        {
+                            if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 7 / 4);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 7 / 4);
+                                isCollide = true;
+                            }
+                        }
+                        else if (playerX <= element.position.x - element.width / 5) // left
+                        {
+                            if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 5 / 4);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 5 / 4);
+                                isCollide = true;
+                            }
+                        }
+                        else // middle
+                        {
+                            if (playerY >= element.position.y - element.height / 2 - player.body.width / 2)
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 2);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 2);
+                                isCollide = true;
+                            }
+                        }
                     }
-                }
-                else // middle
-                {
-                    if (playerY <= element.position.y + element.height / 2 + player.body.width / 2)
+                    else // middle
                     {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI / 2);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI / 2);
+                        if (playerX >= element.position.x + element.width / 5) // right
+                        {
+                            if (playerX <= element.position.x + element.width / 2 + player.body.width / 2)
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation);
+                                player.bounce.y = 1000 * Math.sin(element.rotation);
+                                isCollide = true;
+                            }
+                        }
+                        else if (playerX <= element.position.x - element.width / 5) // left
+                        {
+                            if (playerX >= element.position.x - element.width / 2 - player.body.width / 2)
+                            {
+                                player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI);
+                                player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI);
+                                isCollide = true;
+                            }
+                        }
+                        else
+                        {
+                            isCollide = true;
+                        }
                     }
-                }
-            }
-            else if (playerY <= element.position.y - element.height * 2 / 5) // top
-            {
-                if (playerX >= element.position.x + element.width * 2 / 5) // right
-                {
-                    if (Util.doubleDistance(playerX, playerY, element.position.x + element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
+
+                    if (isCollide)
                     {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 7 / 4);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 7 / 4);
-                    }
-                }
-                else if (playerX <= element.position.x - element.width * 2 / 5) // left
-                {
-                    if (Util.doubleDistance(playerX, playerY, element.position.x - element.width / 2, element.position.y - element.height / 2) <= Math.pow(player.body.width, 2))
-                    {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 5 / 4);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 5 / 4);
-                    }
-                }
-                else // middle
-                {
-                    if (playerY >= element.position.y - element.height / 2 - player.body.width / 2)
-                    {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI * 3 / 2);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI * 3 / 2);
-                    }
-                }
-            }
-            else // middle
-            {
-                if (playerX >= element.position.x + element.width * 2 / 5) // right
-                {
-                    if (playerX <= element.position.x + element.width / 2 + player.body.width / 2)
-                    {
-                        player.bounce.x = 1000 * Math.cos(element.rotation);
-                        player.bounce.y = 1000 * Math.sin(element.rotation);
-                    }
-                }
-                else if (playerX <= element.position.x - element.width * 2 / 5) // left
-                {
-                    if (playerX >= element.position.x - element.width / 2 - player.body.width / 2)
-                    {
-                        player.bounce.x = 1000 * Math.cos(element.rotation + Math.PI);
-                        player.bounce.y = 1000 * Math.sin(element.rotation + Math.PI);
+                        if (element.type === 1 && this.breakCool >= 0.06)
+                        {
+                            this.breakCool = 0;
+                            socket.emit('blockCollision', {roomid:roomid, index:index});
+                        }
                     }
                 }
             }
