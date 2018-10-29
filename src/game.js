@@ -211,10 +211,6 @@ let inGame =
         leftEnemyText.fixedToCamera = true;
 
         player = new Player();
-<<<<<<< HEAD
-=======
-        player.body.tint = 0x2EFE2E;
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
         for (let i = 0; i < 4; i++)
             player.addTail();
 
@@ -398,10 +394,7 @@ class Player
         this.bounce = {x:0, y:0};
         this.isDead = false;
         this.collisionCool = 0;
-<<<<<<< HEAD
         this.stamina = 5;
-=======
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
 
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
@@ -425,11 +418,6 @@ class Player
                 newTail.alpha = 0.5;
                 newTail.tint = 0x999999;
             }
-<<<<<<< HEAD
-=======
-            else
-                newTail.tint = 0x2EFE2E;
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
             game.physics.arcade.enable(newTail);
         
             // Set Tails's Scale
@@ -445,17 +433,10 @@ class Player
         this.worldBound();
 
         this.collisionCool += game.time.physicsElapsed;
-<<<<<<< HEAD
         if (this.collisionCool >= 0.06)
         {
             this.tailCollision();
             this.collisionCool -= 0.06;
-=======
-        if (this.collisionCool >= 0.04)
-        {
-            this.tailCollision();
-            this.collisionCool -= 0.04;
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
         }
         if (status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
             this.emitDataToServer();
@@ -463,17 +444,13 @@ class Player
     
     move()
     {
-<<<<<<< HEAD
         // Set Speed
-=======
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
         let defaultSpeed = 300;
         let speed = defaultSpeed;
         if (game.input.activePointer.leftButton.isDown)
         {
             if (player.isDead)
                 speed = 800;
-<<<<<<< HEAD
             else if (this.stamina > 0)
             {
                 speed = 600;
@@ -495,12 +472,6 @@ class Player
         this.body.tint = color;
         this.tail.forEach(element => element.tint = color);
 
-=======
-            else
-                speed = 600;
-        }
-    
->>>>>>> edf892affbadd78ab23d37606c928bb75cac4701
         // Body Move
         let x1 = this.body.position.x + this.body.width / 2;
         let y1 = this.body.position.y + this.body.height / 2;
