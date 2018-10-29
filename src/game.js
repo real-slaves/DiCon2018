@@ -23,18 +23,23 @@ let main =
     {
         game.load.image('background', 'src/assets/sprites/background/background.jpg');
         game.load.image('fade', 'src/assets/sprites/background/fade.jpg');
-
+    
         game.load.image('logo', 'src/assets/sprites/UI/logo.png');
         game.load.image('check', 'src/assets/sprites/UI/check.png');
         game.load.image('text1', 'src/assets/sprites/UI/text1.png');
         game.load.image('text2', 'src/assets/sprites/UI/text2.png');
         game.load.image('text3', 'src/assets/sprites/UI/text3.png');
         game.load.image('madeBy', 'src/assets/sprites/UI/madeBy.png');
-
+        game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
+    
         game.load.image('body', 'src/assets/sprites/object/player/body.png');
         game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
-
+    
         game.load.image('particle', 'src/assets/sprites/particle/particle.png');
+    
+        game.load.image('block', 'src/assets/sprites/object//blocks/block.png');
+        game.load.image('breakableBlock', 'src/assets/sprites/object//blocks/breakableBlock.png');
+        game.load.image('leaf', 'src/assets/sprites/object//blocks/leaf.png');
     },
 
     create : function()
@@ -110,6 +115,7 @@ let main =
     {
         this.time += game.time.physicsElapsed;
         player.update();
+
         this.animation();
     },
 
@@ -154,13 +160,12 @@ let waiting =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/background/fade.jpg');
     },
 
     create : function()
     {
         game.stage.backgroundColor = '#f1f1f1';
-        game.add.tileSprite(0, 0, 2000, 2000, 'background');
+        game.add.tileSprite(0, 0, 2000, 2000, 'fade');
     },
 
     update : function()
@@ -184,18 +189,6 @@ let inGame =
 {
     preload : function()
     {
-        game.load.image('background', 'src/assets/sprites/background/background.jpg');
-        game.load.image('fade', 'src/assets/sprites/background/fade.jpg');
-
-        game.load.image('body', 'src/assets/sprites/object/player/body.png');
-        game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
-
-        game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
-
-        game.load.image('block', 'src/assets/sprites/object//blocks/block.png');
-        game.load.image('breakableBlock', 'src/assets/sprites/object//blocks/breakableBlock.png');
-
-        game.load.image('particle', 'src/assets/sprites/particle/particle.png');
     },
 
     create : function()
@@ -205,7 +198,8 @@ let inGame =
         game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background'); 
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
 
-        leftEnemy = game.add.image(screenWidth - 150, 20, 'leftEnemy').fixedToCamera = true;
+        this.leftEnemy = game.add.image(screenWidth - 150, 20, 'leftEnemy');
+        this.leftEnemy.fixedToCamera = true;
         let style = { font: "100px Arial", fill: "#ffffff", boundsAlignH: "center", boundsAlignV: "middle" };
         leftEnemyText = game.add.text(screenWidth - 112, 36, "0", style);
         leftEnemyText.fixedToCamera = true;
@@ -244,10 +238,25 @@ let inGame =
         this.backWaiting();
         this.animaiton();
         this.blockCollision();
+        this.setLayer();
     },
 
     render : function()
     {
+    },
+
+    setLayer : function()
+    {     
+        game.world.bringToTop(player.body);
+        player.tail.forEach(element => game.world.bringToTop(element));
+        enemiesData.forEach(element1 => {
+            game.world.bringToTop(element1.body);
+            element1.tail.forEach(element2 => game.world.bringToTop(element2));
+        })
+        blocks.forEach(element => game.world.bringToTop(element));
+        game.world.bringToTop(this.leftEnemy);
+        game.world.bringToTop(leftEnemyText);
+        game.world.bringToTop(this.fade);
     },
 
     backWaiting : function()
@@ -762,6 +771,9 @@ socket.on("update", function(data)
                         break;
                     case 1:
                         blocks.push(game.add.image(value.x, value.y, 'breakableBlock'));
+                        break;
+                    case 2:
+                        blocks.push(game.add.image(value.x, value.y, 'leaf'));
                         break;
                 }
                 blocks[index].rotation = value.rotation;
