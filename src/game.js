@@ -474,12 +474,15 @@ class Player
         }
 
         // Set Body's color
-        let red = Math.round(255 - (25.5 * this.stamina));
-        let green = Math.round((425 - (25.5 * this.stamina) >= 255) ? 255 : 425 - (25.5 * this.stamina));
-        let blue = 255;
-        let color = blue + Math.pow(16, 2) * green + Math.pow(16, 4) * red;
-        this.body.tint = color;
-        this.tail.forEach(element => element.tint = color);
+        if (!this.isDead)
+        {
+            let red = Math.round(255 - (25.5 * this.stamina));
+            let green = Math.round((425 - (25.5 * this.stamina) >= 255) ? 255 : 425 - (25.5 * this.stamina));
+            let blue = 255;
+            let color = blue + Math.pow(16, 2) * green + Math.pow(16, 4) * red;
+            this.body.tint = color;
+            this.tail.forEach(element => element.tint = color);
+        }
 
         // Body Move
         let x1 = this.body.position.x + this.body.width / 2;
@@ -768,6 +771,7 @@ socket.on("update", function(data)
                 {
                     case 0:
                         blocks.push(game.add.image(value.x, value.y, 'block'));
+                        
                         break;
                     case 1:
                         blocks.push(game.add.image(value.x, value.y, 'breakableBlock'));
@@ -780,6 +784,9 @@ socket.on("update", function(data)
                 blocks[index].scale.setTo(value.size);
                 blocks[index].anchor.setTo(0.5);
                 blocks[index].type = value.type;
+                if (value.type == 2
+                    && Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
+                    blocks[index].alpha = 0.5;
             })
         }
     }
