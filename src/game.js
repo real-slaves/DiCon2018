@@ -841,7 +841,7 @@ function updateChat(chat) {
         if (chat.length > document.getElementsByClassName("messageUserName").length)
             document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p>: <p class="messageDescription"> </p></div>';
         else
-            document.getElementById("chat").removeChild("div")
+            break;
     }
 
     chat.forEach((message, index) => {
