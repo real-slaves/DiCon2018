@@ -3,6 +3,7 @@ let foodChain = [];
 let enemiesData = [];
 let roomid = -3;
 let status = 0;
+let map = 0;
 let username = "guest";
 
 let blocks = [];
@@ -44,6 +45,10 @@ let main =
         game.load.image('block', 'src/assets/sprites/object//blocks/block.png');
         game.load.image('breakableBlock', 'src/assets/sprites/object//blocks/breakableBlock.png');
         game.load.image('leaf', 'src/assets/sprites/object//blocks/leaf.png');
+        game.load.image('woodleaf', 'src/assets/sprites/object//blocks/woodleaf.png');
+        game.load.image('log', 'src/assets/sprites/object//blocks/log.png');
+        game.load.image('water', 'src/assets/sprites/object//blocks/water.png');
+        game.load.image('cactus', 'src/assets/sprites/object//blocks/cactus.png');
     },
 
     create : function()
@@ -201,11 +206,17 @@ let inGame =
         game.physics.startSystem(Phaser.Physics.ARCADE);    
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
         this.tile = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background');
-        this.tile.tint = 0x91f207;
+        this.tile.tint = 0xffffff;
 
         this.minimap = game.add.image(screenWidth - 125, screenHeight - 125, 'minimap');
         this.minimap.fixedToCamera = true;
         this.minimap.anchor.setTo(0.5, 0.5);
+
+        this.mask = game.add.graphics(0, 0);
+        this.mask.beginFill(0xffffff);
+        this.mask.drawRect(screenWidth - 240, screenHeight - 240, 230, 230);
+        this.mask.fixedToCamera = true;
+
         this.leftEnemy = game.add.image(screenWidth - 85, 120, 'leftEnemy');
         this.leftEnemy.fixedToCamera = true;
         this.leftEnemy.anchor.setTo(0.5, 0.5);
@@ -253,35 +264,56 @@ let inGame =
         this.animaiton();
         this.blockCollision();
         this.setLayer();
+        this.setGroundColor();
     },
 
     render : function()
     {
     },
 
+    setGroundColor : function()
+    {
+        if (map === 1)
+            this.tile.tint = 0xeeeeee;
+        else if (map === 2)
+            this.tile.tint = 0x91f207;
+        else if (map === 3)
+            this.tile.tint = 0x07f276;
+        else
+            this.tile.tint = 0xffffff;
+    },
+
     setLayer : function()
-    {     
-        // 1층 : 플레이어
+    {
+        // 1층 : 물
+        blocks.filter(element => element.type == 5).forEach(element => game.world.bringToTop(element));
+
+        // 2층 : 플레이어
         game.world.bringToTop(player.body);
         player.tail.forEach(element => game.world.bringToTop(element));
 
-        // 2층 : 적
+        // 3층 : 적
         enemiesData.forEach(element1 => {
             game.world.bringToTop(element1.body);
             element1.tail.forEach(element2 => game.world.bringToTop(element2));
         })
 
-        // 3층 : 구조물
-        blocks.forEach(element => game.world.bringToTop(element));
+        // 4층 : 구조물
+        blocks.filter(element => element.type != 4 && element.type != 5).forEach(element => game.world.bringToTop(element));
+        blocks.filter(element => element.type == 4).forEach(element => game.world.bringToTop(element));
 
-        // 4층 : UI
+        // 5층 : UI
+        minimapAnchor.forEach(element => element.mask = this.mask);
+
         game.world.bringToTop(this.leftEnemy);
         leftEnemyText.forEach(element => game.world.bringToTop(element));
         game.world.bringToTop(leftEnemyText2);
         game.world.bringToTop(this.minimap);
-        minimapAnchor.forEach(element => game.world.bringToTop(element));
+        minimapAnchor.filter(element => element.type == 5).forEach(element => game.world.bringToTop(element));
+        minimapAnchor.filter(element => element.type != 4 && element.type != 5).forEach(element => game.world.bringToTop(element));
+        minimapAnchor.filter(element => element.type == 4).forEach(element => game.world.bringToTop(element));
 
-        // 5층 : 페이드
+        // 6층 : 페이드
         game.world.bringToTop(this.fade);
     },
 
@@ -307,7 +339,23 @@ let inGame =
     blockCollision : function()
     {
         blocks.forEach((element, index) => {
-            if (element.type === 0 || element.type === 1)
+            if (element.type === 5)
+            {
+                if (Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2))
+                {
+                    player.slow = 0.4;
+                }
+            }
+            else if (element.type === 3)
+            {
+                if (Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2))
+                {
+                    let angle = Math.atan2(player.body.position.y - element.position.y, player.body.position.x - element.position.x);
+                    player.bounce.x = 800 * Math.cos(angle);
+                    player.bounce.y = 800 * Math.sin(angle);
+                }
+            }
+            else if (element.type === 0 || element.type === 1)
             {
                 if (Util.doubleDistance(player.body.position, element.position) <= Math.pow(element.width / 2 + player.body.width / 2, 2) + Math.pow(element.height / 2 + player.body.width / 2, 2))
                 {
@@ -430,6 +478,7 @@ class Player
         this.isDead = false;
         this.collisionCool = 0;
         this.stamina = 5;
+        this.slow = 0;
 
         game.physics.arcade.enable(this.body);
         game.camera.follow(this.body);
@@ -473,6 +522,12 @@ class Player
             this.tailCollision();
             this.collisionCool -= 0.06;
         }
+        if (this.slow > 0)
+        {
+            this.slow -= game.time.physicsElapsed;
+            if (this.slow <= 0)
+                this.slow = 0;
+        }
         if (status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
             this.emitDataToServer();
     }
@@ -481,6 +536,8 @@ class Player
     {
         // Set Speed
         let defaultSpeed = 300;
+        if (this.slow > 0)
+            defaultSpeed = 150;
         let speed = defaultSpeed;
         if (game.input.activePointer.leftButton.isDown)
         {
@@ -488,7 +545,14 @@ class Player
                 speed = 800;
             else if (this.stamina > 0)
             {
-                speed = 600;
+                if (this.slow > 0)
+                {
+                    speed = 300;
+                }
+                else
+                {
+                    speed = 600;
+                }
                 this.stamina -= game.time.physicsElapsed;
                 if (this.stamina <= 0) this.stamina = 0;
             }
@@ -758,6 +822,7 @@ class Enemy
         minimapAnchor[minimapAnchor.length - 1].tint = 0x00fff6;
         minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
         minimapAnchor[minimapAnchor.length - 1].scale.setTo(880 / mapSize.x);
+        minimapAnchor[minimapAnchor.length - 1].type = -1;
 
         leftEnemyText.forEach(element => element.text = "");
         leftEnemyText[0].text = username;
@@ -787,6 +852,7 @@ class Enemy
         minimapAnchor[minimapAnchor.length - 1].rotation = data.rotation;
         minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
         minimapAnchor[minimapAnchor.length - 1].scale.setTo(880 / mapSize.x);
+        minimapAnchor[minimapAnchor.length - 1].type = -1;
 
         this.id = data.id;
         if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
@@ -817,6 +883,7 @@ socket.on("update", function(data)
         waiting.getDataFromServer();
     if (game.state.current == 'inGame' && roomid !== -2)
     {
+        map = data.room.map;
         foodChain = data.room.foodchain;
         status = data.room.status;
         updateChat(data.room.chat);
@@ -843,20 +910,36 @@ socket.on("update", function(data)
                         blocks.push(game.add.image(value.x, value.y, 'leaf'));
                         minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'leaf'));
                         break;
+                    case 3:
+                        blocks.push(game.add.image(value.x, value.y, 'log'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'log'));
+                        break;
+                    case 4:
+                        blocks.push(game.add.image(value.x, value.y, 'woodleaf'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'woodleaf'));
+                        break;
+                    case 5:
+                        blocks.push(game.add.image(value.x, value.y, 'water'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'water'));
+                        break;
+                    case 6:
+                        blocks.push(game.add.image(value.x, value.y, 'cactus'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'cactus'));
+                        break;
                 }
                 blocks[index].rotation = value.rotation;
                 blocks[index].scale.setTo(value.size);
                 blocks[index].anchor.setTo(0.5);
                 blocks[index].type = value.type;
-                if (value.type == 2
+                if ((value.type == 2 || value.type == 4)
                     && Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
-                    blocks[index].alpha = 0.5;
+                    blocks[blocks.length - 1].alpha = 0.5;
 
                 minimapAnchor[minimapAnchor.length - 1].anchor.setTo(0.5, 0.5);
                 minimapAnchor[minimapAnchor.length - 1].rotation = value.rotation;
                 minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
                 minimapAnchor[minimapAnchor.length - 1].scale.setTo(220 / mapSize.x * value.size);
-
+                minimapAnchor[minimapAnchor.length - 1].type = value.type;
             })
         }
     }
