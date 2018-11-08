@@ -7,7 +7,9 @@ let username = "guest";
 
 let blocks = [];
 let player = {};
-let leftEnemyText;
+let leftEnemyText = [];
+let leftEnemyText2;
+let minimapAnchor = [];
 
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
@@ -31,6 +33,8 @@ let main =
         game.load.image('text3', 'src/assets/sprites/UI/text3.png');
         game.load.image('madeBy', 'src/assets/sprites/UI/madeBy.png');
         game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
+        game.load.image('minimap', 'src/assets/sprites/UI/minimap.png');
+        game.load.image('anchor', 'src/assets/sprites/UI/anchor.png');
     
         game.load.image('body', 'src/assets/sprites/object/player/body.png');
         game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
@@ -195,14 +199,24 @@ let inGame =
     {
         game.stage.backgroundColor = '#f1f1f1';
         game.physics.startSystem(Phaser.Physics.ARCADE);    
-        game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background'); 
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
+        this.tile = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background');
+        this.tile.tint = 0x91f207;
 
-        this.leftEnemy = game.add.image(screenWidth - 150, 20, 'leftEnemy');
+        this.minimap = game.add.image(screenWidth - 125, screenHeight - 125, 'minimap');
+        this.minimap.fixedToCamera = true;
+        this.minimap.anchor.setTo(0.5, 0.5);
+        this.leftEnemy = game.add.image(screenWidth - 85, 120, 'leftEnemy');
         this.leftEnemy.fixedToCamera = true;
-        let style = { font: "100px Arial", fill: "#ffffff", boundsAlignH: "center", boundsAlignV: "middle" };
-        leftEnemyText = game.add.text(screenWidth - 112, 36, "0", style);
-        leftEnemyText.fixedToCamera = true;
+        this.leftEnemy.anchor.setTo(0.5, 0.5);
+        leftEnemyText = [];
+        for (let i = 0; i < 8; i++)
+        {
+            leftEnemyText.push(game.add.text(screenWidth - 145, 20 + i * 21.5, "0", { font: "18px Arial", fill: "#fff"}));
+            leftEnemyText[i].fixedToCamera = true;
+        }
+        leftEnemyText2 = game.add.text(screenWidth - 145, 198, "0", { font: "20px Arial", fill: "#cccccc"});
+        leftEnemyText2.fixedToCamera = true;
 
         player = new Player();
         for (let i = 0; i < 4; i++)
@@ -247,15 +261,27 @@ let inGame =
 
     setLayer : function()
     {     
+        // 1층 : 플레이어
         game.world.bringToTop(player.body);
         player.tail.forEach(element => game.world.bringToTop(element));
+
+        // 2층 : 적
         enemiesData.forEach(element1 => {
             game.world.bringToTop(element1.body);
             element1.tail.forEach(element2 => game.world.bringToTop(element2));
         })
+
+        // 3층 : 구조물
         blocks.forEach(element => game.world.bringToTop(element));
+
+        // 4층 : UI
         game.world.bringToTop(this.leftEnemy);
-        game.world.bringToTop(leftEnemyText);
+        leftEnemyText.forEach(element => game.world.bringToTop(element));
+        game.world.bringToTop(leftEnemyText2);
+        game.world.bringToTop(this.minimap);
+        minimapAnchor.forEach(element => game.world.bringToTop(element));
+
+        // 5층 : 페이드
         game.world.bringToTop(this.fade);
     },
 
@@ -703,7 +729,11 @@ class Enemy
                 tail.destroy();
             });
         });
+        minimapAnchor.forEach(anchor => {
+            anchor.destroy();
+        })
         enemiesData = []; 
+        minimapAnchor = [];
 
         // Save User's roomid
         roomid = enemies.find(enemy => enemy.id == socket.id).roomid;
@@ -722,33 +752,65 @@ class Enemy
             });
         }
 
-        leftEnemyText.text = (enemiesData.length + !player.isDead).toString();
+        minimapAnchor.push(game.add.sprite(screenWidth - 230 + player.body.position.x * 210 / mapSize.x, screenHeight - 230 + player.body.position.y * 210 / mapSize.y, 'anchor'));
+        minimapAnchor[minimapAnchor.length - 1].anchor.setTo(0.5, 0.5);
+        minimapAnchor[minimapAnchor.length - 1].rotation = player.body.rotation;
+        minimapAnchor[minimapAnchor.length - 1].tint = 0x00fff6;
+        minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
+        minimapAnchor[minimapAnchor.length - 1].scale.setTo(880 / mapSize.x);
+
+        leftEnemyText.forEach(element => element.text = "");
+        leftEnemyText[0].text = username;
+        enemiesData.forEach((enemy, index) => {
+            leftEnemyText[1 + index].text = enemy.username.text;
+            if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == enemy.id)
+                leftEnemyText[1 + index].fill = "#f6ff5e";
+            else
+              leftEnemyText[1 + index].fill = "#ffffff";
+        });
+        leftEnemyText2.text = (enemiesData.length + (!player.isDead || status == 1)).toString() + " left";
     }
 
     getDataEach(data)
     {
         // Create body
-        this.username = game.add.text(data.x, data.y - 100, data.username);
+        this.username = game.add.text(data.x, data.y - 50, data.username,
+            { font: "bold 32px Arial", fill: "#000", boundsAlignH: "center", boundsAlignV: "middle" });
+        this.username.setTextBounds(0, 0, 0, 0);
+
         this.body = game.add.sprite(data.x, data.y, 'body');
         this.body.rotation = data.rotation;
         this.body.anchor.setTo(0.5, 0.5);
+
+        minimapAnchor.push(game.add.sprite(screenWidth - 230 + data.x * 210 / mapSize.x, screenHeight - 230 + data.y * 210 / mapSize.y, 'anchor'));
+        minimapAnchor[minimapAnchor.length - 1].anchor.setTo(0.5, 0.5);
+        minimapAnchor[minimapAnchor.length - 1].rotation = data.rotation;
+        minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
+        minimapAnchor[minimapAnchor.length - 1].scale.setTo(880 / mapSize.x);
+
         this.id = data.id;
         if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
-            this.body.tint = 0x00ffff;
-
+        {
+            this.body.tint = 0xffe13a;
+            minimapAnchor[minimapAnchor.length - 1].tint = 0xffe13a;
+        }
+        else
+        {
+            minimapAnchor[minimapAnchor.length - 1].tint = 0x00ff12;
+        }
         data.tail.forEach((tail, index) => {
             this.tail.push(game.add.sprite(tail.x, tail.y, 'tail'));
             this.tail[index].anchor.setTo(0.5, 0.5);
             this.tail[index].scale.setTo(tail.scale.x, tail.scale.y);
             this.tail[index].rotation = game.physics.arcade.angleBetween(this.tail[index].position, (index == 0) ? this.body.position : this.tail[index - 1].position);
             if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
-                this.tail[index].tint = 0x00ffff;
+                this.tail[index].tint = 0xffe13a;
         });
     }
 }
 
 // Socket IO
-let socket = io('http://tail-server-qhjjb.run.goorm.io');
+let socket = io('http://tail-server-nlksp.run.goorm.io');
 socket.on("update", function(data)
 {
     if (game.state.current == 'waiting')
@@ -771,13 +833,15 @@ socket.on("update", function(data)
                 {
                     case 0:
                         blocks.push(game.add.image(value.x, value.y, 'block'));
-                        
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'block'));
                         break;
                     case 1:
                         blocks.push(game.add.image(value.x, value.y, 'breakableBlock'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'breakableBlock'));
                         break;
                     case 2:
                         blocks.push(game.add.image(value.x, value.y, 'leaf'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'leaf'));
                         break;
                 }
                 blocks[index].rotation = value.rotation;
@@ -787,6 +851,12 @@ socket.on("update", function(data)
                 if (value.type == 2
                     && Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
                     blocks[index].alpha = 0.5;
+
+                minimapAnchor[minimapAnchor.length - 1].anchor.setTo(0.5, 0.5);
+                minimapAnchor[minimapAnchor.length - 1].rotation = value.rotation;
+                minimapAnchor[minimapAnchor.length - 1].fixedToCamera = true;
+                minimapAnchor[minimapAnchor.length - 1].scale.setTo(220 / mapSize.x * value.size);
+
             })
         }
     }
@@ -801,6 +871,7 @@ socket.on("died", (data) => {
             tail.alpha = 0.5;
             tail.tint = 0x999999;
         })
+        leftEnemyText[0].fill = "#999999";
     }
     emitter.x = data.x;
     emitter.y = data.y;
@@ -839,7 +910,7 @@ function updateChat(chat) {
     let messageDescriptionElement = document.getElementsByClassName("messageDescription");
     while(chat.length != document.getElementsByClassName("messageUserName").length) {
         if (chat.length > document.getElementsByClassName("messageUserName").length)
-            document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p>: <p class="messageDescription"> </p></div>';
+            document.getElementById("chat").innerHTML += '<div class="message"><p class="messageUserName"> </p> : <p class="messageDescription"> </p></div>';
         else
             break;
     }
