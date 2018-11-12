@@ -49,6 +49,9 @@ let main =
         game.load.image('log', 'src/assets/sprites/object//blocks/log.png');
         game.load.image('water', 'src/assets/sprites/object//blocks/water.png');
         game.load.image('cactus', 'src/assets/sprites/object//blocks/cactus.png');
+        game.load.image('cherry1', 'src/assets/sprites/object//blocks/cherry1.png');
+        game.load.image('cherry2', 'src/assets/sprites/object//blocks/cherry2.png');
+        game.load.image('flower', 'src/assets/sprites/object//blocks/flower.png');
     },
 
     create : function()
@@ -279,6 +282,8 @@ let inGame =
             this.tile.tint = 0x91f207;
         else if (map === 3)
             this.tile.tint = 0x07f276;
+        else if (map === 4)
+            this.tile.tint = 0xbdf207;   
         else
             this.tile.tint = 0xffffff;
     },
@@ -299,8 +304,8 @@ let inGame =
         })
 
         // 4층 : 구조물
-        blocks.filter(element => element.type != 4 && element.type != 5).forEach(element => game.world.bringToTop(element));
-        blocks.filter(element => element.type == 4).forEach(element => game.world.bringToTop(element));
+        blocks.filter(element => element.type != 4 && element.type != 5 && element.type != 7 && element.type != 8).forEach(element => game.world.bringToTop(element));
+        blocks.filter(element => element.type == 4 || element.type == 7 || element.type == 8).forEach(element => game.world.bringToTop(element));
 
         // 5층 : UI
         minimapAnchor.forEach(element => element.mask = this.mask);
@@ -310,8 +315,8 @@ let inGame =
         game.world.bringToTop(leftEnemyText2);
         game.world.bringToTop(this.minimap);
         minimapAnchor.filter(element => element.type == 5).forEach(element => game.world.bringToTop(element));
-        minimapAnchor.filter(element => element.type != 4 && element.type != 5).forEach(element => game.world.bringToTop(element));
-        minimapAnchor.filter(element => element.type == 4).forEach(element => game.world.bringToTop(element));
+        minimapAnchor.filter(element => element.type != 4 && element.type != 5 && element.type != 7 && element.type != 8).forEach(element => game.world.bringToTop(element));
+        minimapAnchor.filter(element => element.type == 4 || element.type == 7 || element.type == 8).forEach(element => game.world.bringToTop(element));
 
         // 6층 : 페이드
         game.world.bringToTop(this.fade);
@@ -926,12 +931,24 @@ socket.on("update", function(data)
                         blocks.push(game.add.image(value.x, value.y, 'cactus'));
                         minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'cactus'));
                         break;
+                    case 7:
+                        blocks.push(game.add.image(value.x, value.y, 'cherry1'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'cherry1'));
+                        break;
+                    case 8:
+                        blocks.push(game.add.image(value.x, value.y, 'cherry2'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'cherry2'));
+                        break;
+                    case 9:
+                        blocks.push(game.add.image(value.x, value.y, 'flower'));
+                        minimapAnchor.push(game.add.sprite(screenWidth - 230 + value.x * 210 / mapSize.x, screenHeight - 230 + value.y * 210 / mapSize.y, 'flower'));
+                        break;
                 }
                 blocks[index].rotation = value.rotation;
                 blocks[index].scale.setTo(value.size);
                 blocks[index].anchor.setTo(0.5);
                 blocks[index].type = value.type;
-                if ((value.type == 2 || value.type == 4)
+                if ((value.type == 2 || value.type == 4 || value.type == 7 || value.type == 8 || value.type == 9)
                     && Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
                     blocks[blocks.length - 1].alpha = 0.5;
 
