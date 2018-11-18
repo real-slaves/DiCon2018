@@ -12,6 +12,11 @@ let leftEnemyText = [];
 let leftEnemyText2;
 let minimapAnchor = [];
 
+let win = {};
+let lose = {};
+let mainmenu = {};
+let regame = {};
+
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
 let mapSize = {x:2400, y:2400};
@@ -36,6 +41,10 @@ let main =
         game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
         game.load.image('minimap', 'src/assets/sprites/UI/minimap.png');
         game.load.image('anchor', 'src/assets/sprites/UI/anchor.png');
+        game.load.image('lose', 'src/assets/sprites/UI/lose.png');
+        game.load.image('win', 'src/assets/sprites/UI/win.png');
+        game.load.image('regame', 'src/assets/sprites/UI/regame.png');
+        game.load.image('mainmenu', 'src/assets/sprites/UI/mainmenu.png');
     
         game.load.image('body', 'src/assets/sprites/object/player/body.png');
         game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
@@ -48,7 +57,6 @@ let main =
         game.load.image('woodleaf', 'src/assets/sprites/object//blocks/woodleaf.png');
         game.load.image('log', 'src/assets/sprites/object//blocks/log.png');
         game.load.image('water', 'src/assets/sprites/object//blocks/water.png');
-        game.load.image('cactus', 'src/assets/sprites/object//blocks/cactus.png');
         game.load.image('cherry1', 'src/assets/sprites/object//blocks/cherry1.png');
         game.load.image('cherry2', 'src/assets/sprites/object//blocks/cherry2.png');
         game.load.image('flower', 'src/assets/sprites/object//blocks/flower.png');
@@ -61,6 +69,7 @@ let main =
         player = new Player();
         player.body.position.x = -10;
         player.body.position.y = -10;
+        game.camera.follow(null);
 
         for (let i = 0; i < 10; i++) { player.addTail(); player.tail[i].tint = 0xffffff };
 
@@ -107,9 +116,6 @@ let main =
         this.button[1].check.alpha = 0; this.button[1].text.alpha = 0;
         this.button[2].check.alpha = 0; this.button[2].text.alpha = 0;
 
-        this.fade = game.add.tileSprite(0, 0, 2000, 2000, 'fade');
-        this.fade.alpha = 0;
-
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
         emitter.setAlpha(1, 0, 1000);
@@ -121,6 +127,10 @@ let main =
         emitter.x = player.body.position.x;
         emitter.y = player.body.position.y;
         emitter.start(true, 1500, null, 10);
+
+        this.fade = game.add.tileSprite(0, 0, 2000, 2000, 'fade');
+        this.fade.alpha = 1;
+        this.fadeDisappear = true;
     },
 
     update : function()
@@ -137,6 +147,18 @@ let main =
 
     animation : function()
     {
+        if (this.fadeDisappear)
+        {
+            if (this.fade.alpha <= game.time.physicsElapsed * 2)
+            {
+                this.fade.alpha = 0;
+                this.fadeDisappear = false;
+            }
+            else
+            {
+                this.fade.alpha -= game.time.physicsElapsed * 2;
+            }
+        }
         if (this.goToWaiting !== 0)
         {
             this.fade.alpha = (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
@@ -243,6 +265,48 @@ let inGame =
         this.breakCool = 0;
         this.fade = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'fade');
 
+        win = game.add.image(screenWidth / 2, screenHeight / 2, 'win');
+        win.fixedToCamera = true;
+        win.anchor.setTo(0.5);
+        win.visible = false;
+
+        lose = game.add.image(screenWidth / 2, screenHeight / 2, 'lose');
+        lose.fixedToCamera = true;
+        lose.anchor.setTo(0.5);
+        lose.visible = false;
+
+        mainmenu = game.add.button(screenWidth/2 - 250, screenHeight/2 + 270, 'mainmenu', () => {
+            if (roomid === -2)
+            {
+                blocks.forEach(value => value.destroy());
+                blocks = [];
+                
+                roomid = -3;
+                game.state.start('main');
+                document.querySelector("#chat").setAttribute("class", "hide");
+                socket.emit('join', {access: 1});
+            }
+        }, this, 2, 1, 0)
+        mainmenu.fixedToCamera = true;
+        mainmenu.anchor.setTo(0.5);
+        mainmenu.visible = false;
+
+        regame = game.add.button(screenWidth/2 - 70, screenHeight/2 + 270, 'regame', () => {
+            if (roomid === -2)
+            {
+                blocks.forEach(value => value.destroy());
+                blocks = [];
+                
+                roomid = -1;
+                game.state.start('waiting');
+                document.querySelector("#chat").setAttribute("class", "hide");
+                socket.emit('join', {access: 1});
+            }
+        }, this, 2, 1, 0)
+        regame.fixedToCamera = true;
+        regame.anchor.setTo(0.5);
+        regame.visible = false;
+
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
         emitter.setAlpha(1, 0, 1000);
@@ -263,7 +327,6 @@ let inGame =
 
         player.update();
 
-        this.backWaiting();
         this.animaiton();
         this.blockCollision();
         this.setLayer();
@@ -317,23 +380,13 @@ let inGame =
         minimapAnchor.filter(element => element.type == 5).forEach(element => game.world.bringToTop(element));
         minimapAnchor.filter(element => element.type != 4 && element.type != 5 && element.type != 7 && element.type != 8).forEach(element => game.world.bringToTop(element));
         minimapAnchor.filter(element => element.type == 4 || element.type == 7 || element.type == 8).forEach(element => game.world.bringToTop(element));
+        game.world.bringToTop(lose);
+        game.world.bringToTop(win);
+        game.world.bringToTop(regame);
+        game.world.bringToTop(mainmenu);
 
         // 6층 : 페이드
         game.world.bringToTop(this.fade);
-    },
-
-    backWaiting : function()
-    {
-        if (game.input.activePointer.leftButton.justPressed(100) && roomid === -2)
-        {
-            blocks.forEach(value => value.destroy());
-            blocks = [];
-            
-            roomid = -1;
-            game.state.start('waiting');
-            document.querySelector("#chat").setAttribute("class", "hide");
-            socket.emit('join', {access: 1});
-        }
     },
 
     animaiton : function()
@@ -458,7 +511,7 @@ let inGame =
 
                     if (isCollide)
                     {
-                        if (element.type === 1 && this.breakCool >= 0.06)
+                        if (element.type === 1 && this.breakCool >= 0.06 && !player.isDead)
                         {
                             this.breakCool = 0;
                             socket.emit('blockCollision', {roomid:roomid, index:index});
@@ -716,16 +769,17 @@ class Player
 
     gameEnd(value)
     {
-        let style = { font: "bold 50px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
         if (value.winner.id === socket.id)
         {
-            this.waitingText = game.add.text(game.camera.position.x + screenWidth/2, game.camera.position.y + screenHeight/2, "You Win!", style)
-            this.waitingText.setShadow(3, 3, 'rgba(0,0,0,1)', 2);
+            win.visible = true;
+            regame.visible = true;
+            mainmenu.visible = true;
         }
         else
         {
-            this.waitingText = game.add.text(game.camera.position.x + screenWidth/2, game.camera.position.y + screenHeight/2, "You Lose!", style)
-            this.waitingText.setShadow(3, 3, 'rgba(0,0,0,1)', 2);
+            lose.visible = true;
+            regame.visible = true;
+            mainmenu.visible = true;
         }
     }
 
