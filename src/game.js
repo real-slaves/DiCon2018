@@ -1,6 +1,7 @@
 // variables
 let foodChain = [];
 let enemiesData = [];
+let playerName = {};
 let roomid = -3;
 let status = 0;
 let map = 0;
@@ -16,6 +17,7 @@ let win = {};
 let lose = {};
 let mainmenu = {};
 let regame = {};
+let rank = {};
 
 let screenHeight = innerHeight;
 let screenWidth = innerWidth;
@@ -242,6 +244,8 @@ let inGame =
         this.mask.drawRect(screenWidth - 240, screenHeight - 240, 230, 230);
         this.mask.fixedToCamera = true;
 
+        playerName = {};
+
         this.leftEnemy = game.add.image(screenWidth - 85, 120, 'leftEnemy');
         this.leftEnemy.fixedToCamera = true;
         this.leftEnemy.anchor.setTo(0.5, 0.5);
@@ -303,9 +307,14 @@ let inGame =
                 socket.emit('join', {access: 1});
             }
         }, this, 2, 1, 0)
+
         regame.fixedToCamera = true;
         regame.anchor.setTo(0.5);
         regame.visible = false;
+
+        rank = game.add.text(screenWidth / 2 - 330, screenHeight / 2 - 180, "", { font: "40px Arial", fill: "#fff"});
+        rank.fixedToCamera = true;
+        rank.visible = false;
 
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
@@ -370,7 +379,12 @@ let inGame =
         blocks.filter(element => element.type != 4 && element.type != 5 && element.type != 7 && element.type != 8).forEach(element => game.world.bringToTop(element));
         blocks.filter(element => element.type == 4 || element.type == 7 || element.type == 8).forEach(element => game.world.bringToTop(element));
 
-        // 5층 : UI
+        // 5층 : 닉네임
+        enemiesData.forEach(element => {
+            game.world.bringToTop(element.username);
+        })
+
+        // 6층 : UI
         minimapAnchor.forEach(element => element.mask = this.mask);
 
         game.world.bringToTop(this.leftEnemy);
@@ -384,8 +398,9 @@ let inGame =
         game.world.bringToTop(win);
         game.world.bringToTop(regame);
         game.world.bringToTop(mainmenu);
+        game.world.bringToTop(rank);
 
-        // 6층 : 페이드
+        // 7층 : 페이드
         game.world.bringToTop(this.fade);
     },
 
@@ -781,6 +796,12 @@ class Player
             regame.visible = true;
             mainmenu.visible = true;
         }
+
+        value.userInfo.sort((element1, element2) => element2.kill - element1.kill);
+        value.userInfo.forEach((element, index) => {
+            rank.text += (index + 1) + ". " + ((element.id == socket.id) ? username : playerName[element.id]) + " [" + element.kill + "kill]\n";
+        })
+        rank.visible = true;
     }
 
     worldBound()
@@ -931,6 +952,8 @@ class Enemy
             if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
                 this.tail[index].tint = 0xffe13a;
         });
+
+        playerName[data.id] = data.username;
     }
 }
 
@@ -1002,9 +1025,18 @@ socket.on("update", function(data)
                 blocks[index].scale.setTo(value.size);
                 blocks[index].anchor.setTo(0.5);
                 blocks[index].type = value.type;
-                if ((value.type == 2 || value.type == 4 || value.type == 7 || value.type == 8 || value.type == 9)
-                    && Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
-                    blocks[blocks.length - 1].alpha = 0.5;
+                if ((value.type == 2 || value.type == 4 || value.type == 7 || value.type == 8 || value.type == 9))
+                {
+                    if (Util.doubleDistance(player.body.position, blocks[index].position) <= Math.pow(blocks[index].width * 3 / 5, 2))
+                        blocks[blocks.length - 1].alpha = 0.5;
+                    else
+                    {
+                        enemiesData.forEach(enemy => {
+                            if (Util.doubleDistance(enemy.body.position, blocks[index].position) <= Math.pow(blocks[index].width / 2, 2))
+                                enemy.username.text = "";
+                        })
+                    }
+                }
 
                 minimapAnchor[minimapAnchor.length - 1].anchor.setTo(0.5, 0.5);
                 minimapAnchor[minimapAnchor.length - 1].rotation = value.rotation;
