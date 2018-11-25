@@ -5,7 +5,7 @@ let playerName = {};
 let roomid = -3;
 let status = 0;
 let map = 0;
-let username = "guest";
+let username = null;
 
 let blocks = [];
 let player = {};
@@ -66,6 +66,35 @@ let main =
 
     create : function()
     {
+        if (username == null)
+        {
+            let ran = game.rnd.integerInRange(0, 9);
+            if (ran == 0) username == "wonderful";
+            else if (ran == 1) username = "beautiful";
+            else if (ran == 2) username = "kind";
+            else if (ran == 3) username = "handsome";
+            else if (ran == 4) username = "powerful";
+            else if (ran == 5) username = "incredible";
+            else if (ran == 6) username = "graceful";
+            else if (ran == 7) username = "amazing";
+            else if (ran == 8) username = "pretty";
+            else if (ran == 9) username = "cute";
+            else username = "tacky";
+
+            ran = game.rnd.integerInRange(0, 9);
+            if (ran == 0) username == " snoopy";
+            else if (ran == 1) username += " chicken";
+            else if (ran == 2) username += " pizza";
+            else if (ran == 3) username += " ramen";
+            else if (ran == 4) username += " apple";
+            else if (ran == 5) username += " sunrin";
+            else if (ran == 6) username += " kimchi";
+            else if (ran == 7) username += " butter";
+            else if (ran == 8) username += " java";
+            else if (ran == 9) username += " pineapple";
+            else username += "javascript";
+        }
+
         game.stage.backgroundColor = '#f1f1f1';
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
         player = new Player();
@@ -259,6 +288,8 @@ let inGame =
         leftEnemyText2.fixedToCamera = true;
 
         player = new Player();
+        player.body.position.x = game.rnd.realInRange(0, mapSize.x);
+        player.body.position.y = game.rnd.realInRange(0, mapSize.y);
         for (let i = 0; i < 4; i++)
             player.addTail();
 
@@ -798,7 +829,9 @@ class Player
         }
 
         value.userInfo.sort((element1, element2) => element2.kill - element1.kill);
-        value.userInfo.forEach((element, index) => {
+        value.userInfo.filter(element => {
+            return element.id == socket.id || playerName[element.id] !== undefined;
+        }).forEach((element, index) => {
             rank.text += (index + 1) + ". " + ((element.id == socket.id) ? username : playerName[element.id]) + " [" + element.kill + "kill]\n";
         })
         rank.visible = true;
