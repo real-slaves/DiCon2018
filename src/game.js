@@ -5,7 +5,7 @@ let playerName = {};
 let roomid = -3;
 let status = 0;
 let map = 0;
-let username = null;
+let username = "guest";
 
 let roomCreate_number_value = 0;
 let roomCreate_mapSize_value = 0;
@@ -53,6 +53,8 @@ let main =
         game.load.image('text2', 'src/assets/sprites/UI/main/text2.png');
         game.load.image('text3', 'src/assets/sprites/UI/main/text3.png');
         game.load.image('madeBy', 'src/assets/sprites/UI/main/madeBy.png');
+        game.load.image('yourName', 'src/assets/sprites/UI/main/yourName.png');
+        game.load.image('inputNickname', 'src/assets/sprites/UI/main/inputNickname.png');
 
         game.load.image('roomCreate_logo', 'src/assets/sprites/UI/main/roomCreate/roomCreate_logo.png');
         game.load.image('roomCreate_mapSize', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapSize.png');
@@ -88,35 +90,6 @@ let main =
 
     create : function()
     {
-        if (username == null)
-        {
-            let ran = game.rnd.integerInRange(0, 9);
-            if (ran == 0) username = "wonderful";
-            else if (ran == 1) username = "beautiful";
-            else if (ran == 2) username = "kind";
-            else if (ran == 3) username = "handsome";
-            else if (ran == 4) username = "powerful";
-            else if (ran == 5) username = "incredible";
-            else if (ran == 6) username = "graceful";
-            else if (ran == 7) username = "amazing";
-            else if (ran == 8) username = "pretty";
-            else if (ran == 9) username = "cute";
-            else username = "tacky";
-
-            ran = game.rnd.integerInRange(0, 9);
-            if (ran == 0) username += " snoopy";
-            else if (ran == 1) username += " chicken";
-            else if (ran == 2) username += " pizza";
-            else if (ran == 3) username += " ramen";
-            else if (ran == 4) username += " apple";
-            else if (ran == 5) username += " sunrin";
-            else if (ran == 6) username += " kimchi";
-            else if (ran == 7) username += " butter";
-            else if (ran == 8) username += " java";
-            else if (ran == 9) username += " pineapple";
-            else username += "javascript";
-        }
-
         game.stage.backgroundColor = '#f1f1f1';
         game.add.tileSprite(0, 0, 2000, 2000, 'background');
         player = new Player();
@@ -136,11 +109,20 @@ let main =
             this.time = 10;
         }
         this.openRoomCreate = 0;
+        this.openRoomJoin = 0;
         this.button = [];
         this.goToWaiting = 0;
         this.isRandomRoom = true;
 
         this.madeBy = game.add.sprite(screenWidth - 220, screenHeight - 100, 'madeBy');
+        this.yourName = game.add.sprite(0, screenHeight - 90, 'yourName');
+        this.nickname = game.add.text(10, screenHeight - 55, "guest", { font: "37px Arial bold", fill: "#000000"});
+        this.nickname.fontWeight = "bold";
+        game.add.button(10, screenHeight - 51, 'inputNickname', () => {
+            this.focus = "nickname";
+        }, this, 2, 1, 0);
+        this.focus = null;
+        this.cursor = 0;
 
         this.logo = game.add.sprite(screenWidth/2, screenHeight/2, 'logo');
         this.logo.anchor.setTo(0.5);
@@ -291,6 +273,51 @@ let main =
         player.update();
 
         this.animation();
+        this.cursor += game.time.physicsElapsed;
+        if (this.cursor >= 1) this.cursor = 0;
+
+        if (game.input.activePointer.leftButton.isDown)
+            this.focus = null;
+        
+        this.nickname.text = username;
+        if (this.cursor >= 0.5)
+        {
+            if (this.focus == "nickname")
+                this.nickname.text = username + "|";
+        }
+
+        // input
+        if (game.input.keyboard.downDuration(189, 1)) // minus, underbar
+        {
+            if (this.focus == "nickname" && username.length < 15)
+                username += (game.input.keyboard.isDown(16)) ? "_" : "-";
+        }
+        if (game.input.keyboard.downDuration(32, 1)) // spacebar
+        {
+            if (this.focus == "nickname" && username.length < 15)
+                username += " ";
+        }
+        if (game.input.keyboard.downDuration(8, 1)) // backspacebar
+        {
+            if (this.focus == "nickname")
+                username = username.slice(0, username.length - 1);
+        }
+        for (let i = 65; i <= 90; i++) // alphabet
+        {
+            if (game.input.keyboard.downDuration(i, 1))
+            {
+                if (this.focus == "nickname" && username.length < 15)
+                    username += (game.input.keyboard.isDown(16)) ? String.fromCharCode(i) : String.fromCharCode(i).toLowerCase();
+            }
+        }
+        for (let i = 48; i <= 57; i++) // number
+        {
+            if (game.input.keyboard.downDuration(i, 1))
+            {
+                if (this.focus == "nickname" && username.length < 15)
+                    username += String.fromCharCode(i);
+            }
+        }
     },
 
     render : function()
