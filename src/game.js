@@ -7,6 +7,11 @@ let status = 0;
 let map = 0;
 let username = null;
 
+let roomCreate_number_value = 0;
+let roomCreate_mapSize_value = 0;
+let roomCreate_mapKind_value = 0;
+let roomCreate_object_value = 0;
+
 let blocks = [];
 let player = {};
 let leftEnemyText = [];
@@ -34,20 +39,37 @@ let main =
         game.load.image('background', 'src/assets/sprites/background/background.jpg');
         game.load.image('fade', 'src/assets/sprites/background/fade.jpg');
     
-        game.load.image('logo', 'src/assets/sprites/UI/logo.png');
-        game.load.image('check', 'src/assets/sprites/UI/check.png');
-        game.load.image('text1', 'src/assets/sprites/UI/text1.png');
-        game.load.image('text2', 'src/assets/sprites/UI/text2.png');
-        game.load.image('text3', 'src/assets/sprites/UI/text3.png');
-        game.load.image('madeBy', 'src/assets/sprites/UI/madeBy.png');
-        game.load.image('leftEnemy', 'src/assets/sprites/UI/leftEnemy.png');
-        game.load.image('minimap', 'src/assets/sprites/UI/minimap.png');
-        game.load.image('anchor', 'src/assets/sprites/UI/anchor.png');
-        game.load.image('lose', 'src/assets/sprites/UI/lose.png');
-        game.load.image('win', 'src/assets/sprites/UI/win.png');
-        game.load.image('regame', 'src/assets/sprites/UI/regame.png');
-        game.load.image('mainmenu', 'src/assets/sprites/UI/mainmenu.png');
-    
+        game.load.image('leftEnemy', 'src/assets/sprites/UI/inGame/leftEnemy.png');
+        game.load.image('minimap', 'src/assets/sprites/UI/inGame/minimap.png');
+        game.load.image('anchor', 'src/assets/sprites/UI/inGame/anchor.png');
+        game.load.image('lose', 'src/assets/sprites/UI/inGame/lose.png');
+        game.load.image('win', 'src/assets/sprites/UI/inGame/win.png');
+        game.load.image('regame', 'src/assets/sprites/UI/inGame/regame.png');
+        game.load.image('mainmenu', 'src/assets/sprites/UI/inGame/mainmenu.png');
+
+        game.load.image('logo', 'src/assets/sprites/UI/main/logo.png');
+        game.load.image('check', 'src/assets/sprites/UI/main/check.png');
+        game.load.image('text1', 'src/assets/sprites/UI/main/text1.png');
+        game.load.image('text2', 'src/assets/sprites/UI/main/text2.png');
+        game.load.image('text3', 'src/assets/sprites/UI/main/text3.png');
+        game.load.image('madeBy', 'src/assets/sprites/UI/main/madeBy.png');
+
+        game.load.image('roomCreate_logo', 'src/assets/sprites/UI/main/roomCreate/roomCreate_logo.png');
+        game.load.image('roomCreate_mapSize', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapSize.png');
+        game.load.image('roomCreate_mapKind_0', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapKind_0.png');
+        game.load.image('roomCreate_mapKind_1', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapKind_1.png');
+        game.load.image('roomCreate_mapKind_2', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapKind_2.png');
+        game.load.image('roomCreate_mapKind_3', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapKind_3.png');
+        game.load.image('roomCreate_mapKind_4', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapKind_4.png');
+        game.load.image('roomCreate_number', 'src/assets/sprites/UI/main/roomCreate/roomCreate_number.png');
+        game.load.image('roomCreate_object', 'src/assets/sprites/UI/main/roomCreate/roomCreate_object.png');
+        game.load.image('roomCreate_done', 'src/assets/sprites/UI/main/roomCreate/roomCreate_done.png');
+
+        game.load.image('roomJoin_logo', 'src/assets/sprites/UI/main/roomJoin/roomJoin_logo.png');
+
+        game.load.image('previous', 'src/assets/sprites/UI/main/Previous.png');
+        game.load.image('next', 'src/assets/sprites/UI/main/Next.png');
+
         game.load.image('body', 'src/assets/sprites/object/player/body.png');
         game.load.image('tail', 'src/assets/sprites/object/player/tail.png');
     
@@ -69,7 +91,7 @@ let main =
         if (username == null)
         {
             let ran = game.rnd.integerInRange(0, 9);
-            if (ran == 0) username == "wonderful";
+            if (ran == 0) username = "wonderful";
             else if (ran == 1) username = "beautiful";
             else if (ran == 2) username = "kind";
             else if (ran == 3) username = "handsome";
@@ -82,7 +104,7 @@ let main =
             else username = "tacky";
 
             ran = game.rnd.integerInRange(0, 9);
-            if (ran == 0) username == " snoopy";
+            if (ran == 0) username += " snoopy";
             else if (ran == 1) username += " chicken";
             else if (ran == 2) username += " pizza";
             else if (ran == 3) username += " ramen";
@@ -113,8 +135,10 @@ let main =
         {
             this.time = 10;
         }
+        this.openRoomCreate = 0;
         this.button = [];
         this.goToWaiting = 0;
+        this.isRandomRoom = true;
 
         this.madeBy = game.add.sprite(screenWidth - 220, screenHeight - 100, 'madeBy');
 
@@ -124,7 +148,12 @@ let main =
 
         this.button[0] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2, 'check'),
-            text:game.add.sprite(screenWidth/2 - 50, screenHeight/2, 'text1')
+            text:game.add.button(screenWidth/2 - 50, screenHeight/2, 'text1', () => {
+                if (this.time >= 3.3 && this.openRoomCreate == 0)
+                {
+                    this.openRoomCreate = this.time;
+                }
+            }, this, 2, 1, 0)
         }
         this.button[1] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 80, 'check'),
@@ -146,6 +175,98 @@ let main =
         this.button[0].check.alpha = 0; this.button[0].text.alpha = 0;
         this.button[1].check.alpha = 0; this.button[1].text.alpha = 0;
         this.button[2].check.alpha = 0; this.button[2].text.alpha = 0;
+
+        this.roomCreate_logo = game.add.sprite(-1000, screenHeight/2 - 180, 'roomCreate_logo');
+        this.roomCreate_done = game.add.button(-1000, screenHeight/2 - 130, 'roomCreate_done', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1 && this.goToWaiting === 0)
+            {
+                socket.emit('createCustomRoom', {
+                    numberOfUsers: roomCreate_number_value,
+                    numberOfObjects: roomCreate_object_value,
+                    map: roomCreate_mapKind_value,
+                    mapSize: roomCreate_mapSize_value,
+                    mapCodeFixed: !roomCreate_mapKind_value
+                });
+                this.goToWaiting = this.time;
+                this.isRandomRoom = false;
+            }
+        }, this, 2, 1, 0)
+
+        this.roomCreate_mapKind = game.add.sprite(-1000, screenHeight/2 - 80, 'roomCreate_mapKind_0');
+        this.roomCreate_mapKind_value = 0;
+        this.roomCreate_mapKind_previous = game.add.button(-1000, screenHeight/2 - 80, 'previous', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_mapKind_value = (roomCreate_mapKind_value == 0) ? 4 : roomCreate_mapKind_value - 1;
+                this.roomCreate_mapKind.destroy();
+                this.roomCreate_mapKind = game.add.sprite(10, screenHeight/2 - 80, 'roomCreate_mapKind_' + roomCreate_mapKind_value);
+            }
+        }, this, 2, 1, 0)
+        this.roomCreate_mapKind_next = game.add.button(-1000, screenHeight/2 - 80, 'next', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_mapKind_value = (++roomCreate_mapKind_value) % 5;
+                this.roomCreate_mapKind.destroy();
+                this.roomCreate_mapKind = game.add.sprite(10, screenHeight/2 - 80, 'roomCreate_mapKind_' + roomCreate_mapKind_value);
+            }
+        }, this, 2, 1, 0)
+
+        this.roomCreate_mapSize = game.add.sprite(-1000, screenHeight/2 - 20, 'roomCreate_mapSize');
+        roomCreate_mapSize_value = 2500;
+        this.roomCreate_mapSize_text = game.add.text(-1000, screenHeight/2 - 5, roomCreate_mapSize_value, { font: "35px Arial bold", fill: "#000000"});
+        this.roomCreate_mapSize_text.fontWeight = "bold"
+        this.roomCreate_mapSize_previous = game.add.button(-1000, screenHeight/2 - 20, 'previous', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_mapSize_value = (roomCreate_mapSize_value == 1500) ? 5000 : roomCreate_mapSize_value - 500;
+                this.roomCreate_mapSize_text.text = roomCreate_mapSize_value;
+            }
+        }, this, 2, 1, 0)
+        this.roomCreate_mapSize_next = game.add.button(-1000, screenHeight/2 - 20, 'next', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_mapSize_value = (roomCreate_mapSize_value == 5000) ? 1500 : roomCreate_mapSize_value + 500;
+                this.roomCreate_mapSize_text.text = roomCreate_mapSize_value;
+            }
+        }, this, 2, 1, 0)
+
+        this.roomCreate_object = game.add.sprite(-1000, screenHeight/2 + 40, 'roomCreate_object');
+        roomCreate_object_value = 30;
+        this.roomCreate_object_text = game.add.text(-1000, screenHeight/2 + 55, roomCreate_object_value, { font: "35px Arial bold", fill: "#000000"});
+        this.roomCreate_object_text.fontWeight = "bold"
+        this.roomCreate_object_previous = game.add.button(-1000, screenHeight/2 + 40, 'previous', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_object_value = (roomCreate_object_value == 0) ? 50 : roomCreate_object_value - 5;
+                this.roomCreate_object_text.text = roomCreate_object_value;
+            }
+        }, this, 2, 1, 0)
+        this.roomCreate_object_next = game.add.button(-1000, screenHeight/2 + 40, 'next', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_object_value = (roomCreate_object_value == 50) ? 0 : roomCreate_object_value + 5;
+                this.roomCreate_object_text.text = roomCreate_object_value;
+            }
+        }, this, 2, 1, 0)
+
+        this.roomCreate_number = game.add.sprite(-1000, screenHeight/2 + 100, 'roomCreate_number');
+        roomCreate_number_value = 4;
+        this.roomCreate_number_text = game.add.text(-1000, screenHeight/2 + 115, roomCreate_number_value, { font: "35px Arial bold", fill: "#000000"});
+        this.roomCreate_number_text.fontWeight = "bold"
+        this.roomCreate_number_previous = game.add.button(-1000, screenHeight/2 + 100, 'previous', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_number_value = (roomCreate_number_value == 4) ? 8 : roomCreate_number_value - 1;
+                this.roomCreate_number_text.text = roomCreate_number_value;
+            }
+        }, this, 2, 1, 0)
+        this.roomCreate_number_next = game.add.button(-1000, screenHeight/2 + 100, 'next', () => {
+            if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
+            {
+                roomCreate_number_value = (roomCreate_number_value == 8) ? 4 : roomCreate_number_value + 1;
+                this.roomCreate_number_text.text = roomCreate_number_value;
+            }
+        }, this, 2, 1, 0)
 
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
@@ -178,6 +299,36 @@ let main =
 
     animation : function()
     {
+        if (this.openRoomCreate != 0)
+        {
+            //y=-7x^2+10.5x-3.5
+            let x = this.time - this.openRoomCreate;
+            if (x >= 1) x = 1;
+            let y = -7 * Math.pow(x, 2) + 10.5 * x - 3.5;
+            y = y * 100 + 10;
+
+            this.roomCreate_logo.position.x = y + 10;
+            this.roomCreate_done.position.x = y + 245;
+
+            this.roomCreate_mapKind.position.x = y + 10;
+            this.roomCreate_mapKind_next.position.x = y + 280;
+            this.roomCreate_mapKind_previous.position.x = y + 260;
+
+            this.roomCreate_mapSize.position.x = y + 10;
+            this.roomCreate_mapSize_text.position.x = y + 138;
+            this.roomCreate_mapSize_next.position.x = y + 280;
+            this.roomCreate_mapSize_previous.position.x = y + 260;
+            
+            this.roomCreate_object.position.x = y + 10;
+            this.roomCreate_object_text.position.x = y + 138;
+            this.roomCreate_object_next.position.x = y + 280;
+            this.roomCreate_object_previous.position.x = y + 260;
+            
+            this.roomCreate_number.position.x = y + 10;
+            this.roomCreate_number_text.position.x = y + 138;
+            this.roomCreate_number_next.position.x = y + 280;
+            this.roomCreate_number_previous.position.x = y + 260;
+        }
         if (this.fadeDisappear)
         {
             if (this.fade.alpha <= game.time.physicsElapsed * 2)
@@ -195,9 +346,17 @@ let main =
             this.fade.alpha = (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
             if (this.time - this.goToWaiting > 0.5)
             {
-                roomid = -1;
-                socket.emit('join', {access: 1});
-                game.state.start('waiting');
+                if (this.isRandomRoom)
+                {
+                    roomid = -1;
+                    socket.emit('join', {access: 1});
+                    game.state.start('waiting');
+                }
+                else
+                {
+                    socket.emit('join', {access: 0, roomid: roomid, password: 0});
+                    game.state.start('waiting');
+                }
             }
         }
         else
@@ -238,10 +397,6 @@ let waiting =
     },
 
     render : function()
-    {
-    },
-
-    getDataFromServer : function(data)
     {
         if (roomid != -1) {
             game.state.start('inGame');
@@ -632,7 +787,7 @@ class Player
             if (this.slow <= 0)
                 this.slow = 0;
         }
-        if (status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
+        if (roomid >= 0 && status === 0 || foodChain.findIndex(chain => (chain.hunter === socket.id)) !== -1 )
             this.emitDataToServer();
     }
     
@@ -673,9 +828,13 @@ class Player
             let red = Math.round(255 - (25.5 * this.stamina));
             let green = Math.round((425 - (25.5 * this.stamina) >= 255) ? 255 : 425 - (25.5 * this.stamina));
             let blue = 255;
-            let color = blue + Math.pow(16, 2) * green + Math.pow(16, 4) * red;
-            this.body.tint = color;
-            this.tail.forEach(element => element.tint = color);
+            this.body.tint = blue + Math.pow(16, 2) * green + Math.pow(16, 4) * red;
+            let debug = "";
+            this.tail.forEach((element, index) => {
+                element.tint = blue
+                + Math.pow(16, 2) * Math.round((green + (255 - red) * index / (this.tail.length * 1.5) > 255) ? 255 : green + (255 - red) * index / (this.tail.length * 1.5))
+                + Math.pow(16, 4) * Math.round(red + (255 - red) * index / (this.tail.length * 1.5))
+            });
         }
 
         // Body Move
@@ -693,15 +852,15 @@ class Player
         }
         else
         {
-            if (!player.isDead && Math.abs(this.lastAngle - angle) > 1.5 * Math.PI * game.time.physicsElapsed)
+            if (!player.isDead && Math.abs(this.lastAngle - angle) > 2.5 * Math.PI * game.time.physicsElapsed)
             {
                 let angle2 = (angle - this.lastAngle);
 
                 if (angle2 < -Math.PI) angle2 += 2 * Math.PI;
                 else if (angle2 > Math.PI) angle2 -= 2 * Math.PI;
 
-                if (angle2 < 0) angle = this.lastAngle - (1.5 * Math.PI * game.time.physicsElapsed);
-                else angle = this.lastAngle + (1.5 * Math.PI * game.time.physicsElapsed);
+                if (angle2 < 0) angle = this.lastAngle - (2.5 * Math.PI * game.time.physicsElapsed);
+                else angle = this.lastAngle + (2.5 * Math.PI * game.time.physicsElapsed);
             }
             this.lastAngle = angle;
 
@@ -991,11 +1150,9 @@ class Enemy
 }
 
 // Socket IO
-let socket = io('http://tail-server-nlksp.run.goorm.io');
+let socket = io('http://tail-server-qhjjb.run.goorm.io');
 socket.on("update", function(data)
 {
-    if (game.state.current == 'waiting')
-        waiting.getDataFromServer();
     if (game.state.current == 'inGame' && roomid !== -2)
     {
         map = data.room.map;
@@ -1104,6 +1261,12 @@ socket.on("addTail", () => {
     if (game.state.current == 'inGame')
         if (Math.random() >= 0.5)
             player.addTail();
+});
+socket.on("roomCreated", (data) => {
+    if (game.state.current == 'main')
+    {
+        roomid = data.roomid;
+    }
 });
 socket.on("gameStart", (data) => {
 });
