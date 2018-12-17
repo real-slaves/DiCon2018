@@ -68,6 +68,9 @@ let main =
         game.load.image('roomCreate_done', 'src/assets/sprites/UI/main/roomCreate/roomCreate_done.png');
 
         game.load.image('roomJoin_logo', 'src/assets/sprites/UI/main/roomJoin/roomJoin_logo.png');
+        game.load.image('roomJoin_code', 'src/assets/sprites/UI/main/roomJoin/roomJoin_code.png');
+        game.load.image('roomJoin_password', 'src/assets/sprites/UI/main/roomJoin/roomJoin_password.png');
+        game.load.image('roomJoin_done', 'src/assets/sprites/UI/main/roomJoin/roomJoin_done.png');
 
         game.load.image('previous', 'src/assets/sprites/UI/main/Previous.png');
         game.load.image('next', 'src/assets/sprites/UI/main/Next.png');
@@ -139,7 +142,12 @@ let main =
         }
         this.button[1] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 80, 'check'),
-            text:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 80, 'text2')
+            text:game.add.button(screenWidth/2 - 50, screenHeight/2 + 80, 'text2', () => {
+                if (this.time >= 3.3 && this.openRoomJoin == 0)
+                {
+                    this.openRoomJoin = this.time;
+                }
+            }, this, 2, 1, 0)
         }
         this.button[2] = {
             check:game.add.sprite(screenWidth/2 - 50, screenHeight/2 + 160, 'check'),
@@ -250,6 +258,30 @@ let main =
             }
         }, this, 2, 1, 0)
 
+        this.roomJoin_logo = game.add.sprite(screenWidth, screenHeight/2 - 180, 'roomJoin_logo');
+        this.roomJoin_done = game.add.button(screenWidth, screenHeight/2 - 130, 'roomJoin_done', () => {
+            if (this.openRoomJoin && this.time - this.openRoomJoin >= 1 && this.goToWaiting === 0)
+            {
+
+            }
+        }, this, 2, 1, 0)
+
+        this.roomJoin_code_value = "0";
+        this.roomJoin_code = game.add.sprite(screenWidth, screenHeight/2 - 80, 'roomJoin_code');
+        this.roomJoin_code_text = game.add.text(screenWidth, screenHeight/2 - 40, this.roomJoin_code_value, { font: "35px Arial bold", fill: "#000000"});
+        this.roomJoin_code_text.fontWeight = "bold"
+        this.roomJoin_code_input = game.add.button(screenWidth, screenHeight/2 - 40, 'inputNickname', () => {
+            this.focus = "code";
+        }, this, 2, 1, 0);
+
+        this.roomJoin_password_value = "0";
+        this.roomJoin_password = game.add.sprite(screenWidth, screenHeight/2 + 30, 'roomJoin_password');
+        this.roomJoin_password_text = game.add.text(screenWidth, screenHeight/2 + 70, this.roomJoin_password_value, { font: "35px Arial bold", fill: "#000000"});
+        this.roomJoin_password_text.fontWeight = "bold"
+        this.roomJoin_password_input = game.add.button(screenWidth, screenHeight/2 + 70, 'inputNickname', () => {
+            this.focus = "password";
+        }, this, 2, 1, 0);
+
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
         emitter.setAlpha(1, 0, 1000);
@@ -280,10 +312,16 @@ let main =
             this.focus = null;
         
         this.nickname.text = username;
+        this.roomJoin_code_text.text = this.roomJoin_code_value;
+        this.roomJoin_password_text.text = this.roomJoin_password_value;
         if (this.cursor >= 0.5)
         {
             if (this.focus == "nickname")
                 this.nickname.text = username + "|";
+            if (this.focus == "code")
+                this.roomJoin_code_text.text = this.roomJoin_code_value + "|";
+            if (this.focus == "password")
+                this.roomJoin_password_text.text = this.roomJoin_password_value + "|";
         }
 
         // input
@@ -301,6 +339,10 @@ let main =
         {
             if (this.focus == "nickname")
                 username = username.slice(0, username.length - 1);
+            if (this.focus == "code")
+                this.roomJoin_code_value = this.roomJoin_code_value.slice(0, this.roomJoin_code_value.length - 1);
+            if (this.focus == "password")
+                this.roomJoin_password_value = this.roomJoin_password_value.slice(0, this.roomJoin_password_value.length - 1);
         }
         for (let i = 65; i <= 90; i++) // alphabet
         {
@@ -316,6 +358,10 @@ let main =
             {
                 if (this.focus == "nickname" && username.length < 15)
                     username += String.fromCharCode(i);
+                if (this.focus == "code" && this.roomJoin_code_value.length < 5)
+                    this.roomJoin_code_value += String.fromCharCode(i);
+                if (this.focus == "password" && this.roomJoin_password_value.length < 5)
+                    this.roomJoin_password_value += String.fromCharCode(i);
             }
         }
     },
@@ -355,6 +401,23 @@ let main =
             this.roomCreate_number_text.position.x = y + 138;
             this.roomCreate_number_next.position.x = y + 280;
             this.roomCreate_number_previous.position.x = y + 260;
+        }
+        if (this.openRoomJoin != 0)
+        {
+            //y=-7x^2+10.5x-3.5
+            let x = this.time - this.openRoomJoin;
+            if (x >= 1) x = 1;
+            let y = -7 * Math.pow(x, 2) + 10.5 * x - 3.5;
+            y = y * 100 + 320;
+
+            this.roomJoin_logo.position.x = screenWidth - y;
+            this.roomJoin_done.position.x = screenWidth - y - 5;
+            this.roomJoin_code.position.x = screenWidth - y;
+            this.roomJoin_code_input.position.x = screenWidth - y;
+            this.roomJoin_code_text.position.x = screenWidth - y;
+            this.roomJoin_password.position.x = screenWidth - y;
+            this.roomJoin_password_input.position.x = screenWidth - y;
+            this.roomJoin_password_text.position.x = screenWidth - y;
         }
         if (this.fadeDisappear)
         {
