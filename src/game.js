@@ -185,7 +185,7 @@ let main =
                     numberOfObjects: roomCreate_object_value,
                     map: roomCreate_mapKind_value,
                     mapSize: roomCreate_mapSize_value,
-                    mapCodeFixed: !roomCreate_mapKind_value
+                    mapCodeFixed: roomCreate_mapKind_value > 0
                 });
                 this.goToWaiting = this.time;
                 this.isRandomRoom = false;
