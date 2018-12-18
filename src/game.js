@@ -3,6 +3,7 @@ let foodChain = [];
 let enemiesData = [];
 let playerName = {};
 let roomid = -3;
+let lastedRoomid = 0;
 let roomPassword = "-";
 let status = 0;
 let map = 0;
@@ -611,10 +612,20 @@ let inGame =
                 blocks.forEach(value => value.destroy());
                 blocks = [];
                 
-                roomid = -1;
-                game.state.start('waiting');
-                document.querySelector("#chat").setAttribute("class", "hide");
-                socket.emit('join', {access: 1, roomid, password: roomPassword});
+                if (roomPassword == null)
+                {
+                    roomid = -1;
+                    game.state.start('waiting');
+                    document.querySelector("#chat").setAttribute("class", "hide");
+                    socket.emit('join', {access: 1});
+                }
+                else
+                {
+                    roomid = parseInt(lastedRoomid);
+                    game.state.start('waiting');
+                    document.querySelector("#chat").setAttribute("class", "hide");
+                    socket.emit('join', {access: 0, roomid, password: roomPassword});
+                }
             }
         }, this, 2, 1, 0)
 
@@ -1407,6 +1418,7 @@ socket.on("died", (data) => {
     emitter.start(true, 1500, null, 10);
 });
 socket.on("gameEnd", (value) => {
+    lastedRoomid = roomid;
     roomid = -2;
     player.gameEnd(value);
 });
