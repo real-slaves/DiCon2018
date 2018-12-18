@@ -3,6 +3,7 @@ let foodChain = [];
 let enemiesData = [];
 let playerName = {};
 let roomid = -3;
+let roomPassword = "-";
 let status = 0;
 let map = 0;
 let username = "guest";
@@ -17,6 +18,8 @@ let player = {};
 let leftEnemyText = [];
 let leftEnemyText2;
 let minimapAnchor = [];
+let topbar = {};
+let roomInfo = {};
 
 let win = {};
 let lose = {};
@@ -154,6 +157,7 @@ let main =
             text:game.add.button(screenWidth/2 - 50, screenHeight/2 + 160, 'text3', () => {
                 if (this.time >= 3.3 && this.goToWaiting === 0)
                 {
+                    this.isRandomRoom = true;
                     this.goToWaiting = this.time;
                 }
             }, this, 2, 1, 0)
@@ -262,11 +266,17 @@ let main =
         this.roomJoin_done = game.add.button(screenWidth, screenHeight/2 - 130, 'roomJoin_done', () => {
             if (this.openRoomJoin && this.time - this.openRoomJoin >= 1 && this.goToWaiting === 0)
             {
-
+                socket.emit('join', {
+                    access: 0,
+                    roomid: this.roomJoin_code_value,
+                    password: this.roomJoin_password_value
+                });
+                this.goToWaiting = this.time;
+                this.isRandomRoom = false;
             }
         }, this, 2, 1, 0)
 
-        this.roomJoin_code_value = "0";
+        this.roomJoin_code_value = "-";
         this.roomJoin_code = game.add.sprite(screenWidth, screenHeight/2 - 80, 'roomJoin_code');
         this.roomJoin_code_text = game.add.text(screenWidth, screenHeight/2 - 40, this.roomJoin_code_value, { font: "35px Arial bold", fill: "#000000"});
         this.roomJoin_code_text.fontWeight = "bold"
@@ -274,7 +284,7 @@ let main =
             this.focus = "code";
         }, this, 2, 1, 0);
 
-        this.roomJoin_password_value = "0";
+        this.roomJoin_password_value = "-";
         this.roomJoin_password = game.add.sprite(screenWidth, screenHeight/2 + 30, 'roomJoin_password');
         this.roomJoin_password_text = game.add.text(screenWidth, screenHeight/2 + 70, this.roomJoin_password_value, { font: "35px Arial bold", fill: "#000000"});
         this.roomJoin_password_text.fontWeight = "bold"
@@ -301,6 +311,7 @@ let main =
 
     update : function()
     {
+        game.world.bringToTop(this.fade);
         this.time += game.time.physicsElapsed;
         player.update();
 
@@ -359,9 +370,17 @@ let main =
                 if (this.focus == "nickname" && username.length < 15)
                     username += String.fromCharCode(i);
                 if (this.focus == "code" && this.roomJoin_code_value.length < 5)
+                {
+                    if (this.roomJoin_code_value == "-")
+                        this.roomJoin_code_value = "";
                     this.roomJoin_code_value += String.fromCharCode(i);
+                }
                 if (this.focus == "password" && this.roomJoin_password_value.length < 5)
+                {
+                    if (this.roomJoin_password_value == "-")
+                        this.roomJoin_password_value = "";
                     this.roomJoin_password_value += String.fromCharCode(i);
+                }
             }
         }
     },
@@ -433,19 +452,27 @@ let main =
         }
         if (this.goToWaiting !== 0)
         {
-            this.fade.alpha = (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
-            if (this.time - this.goToWaiting > 0.5)
+            if (roomid == -3 && this.isRandomRoom == false && this.time - this.goToWaiting > 0.15)
             {
-                if (this.isRandomRoom)
+                this.goToWaiting = 0;
+                this.fade.alpha = 0;
+            }
+            else
+            {
+                this.fade.alpha = (((this.time - this.goToWaiting) * 3 > 1) ? 1 : (this.time - this.goToWaiting) * 3);
+                if (this.time - this.goToWaiting > 0.5)
                 {
-                    roomid = -1;
-                    socket.emit('join', {access: 1});
-                    game.state.start('waiting');
-                }
-                else
-                {
-                    socket.emit('join', {access: 0, roomid: roomid, password: 0});
-                    game.state.start('waiting');
+                    if (this.isRandomRoom)
+                    {
+                        roomid = -1;
+                        socket.emit('join', {access: 1});
+                        game.state.start('waiting');
+                    }
+                    else
+                    {
+                        socket.emit('join', {access: 0, roomid: roomid, password: 0});
+                        game.state.start('waiting');
+                    }
                 }
             }
         }
@@ -484,14 +511,14 @@ let waiting =
 
     update : function()
     {
-    },
-
-    render : function()
-    {
         if (roomid != -1) {
             game.state.start('inGame');
             document.querySelector("#chat").setAttribute("class", "");
         }
+    },
+
+    render : function()
+    {
     }
 }
 
@@ -549,6 +576,17 @@ let inGame =
         win.fixedToCamera = true;
         win.anchor.setTo(0.5);
         win.visible = false;
+
+        topbar = game.add.text(screenWidth / 2, 50, "플레이어를 기다리는 중입니다 (1/4)",
+            { font: "bold 30px Arial", fill: "#000", boundsAlignH: "center", boundsAlignV: "middle" });
+        topbar.setTextBounds(0, 0, 0, 0);
+        topbar.fontWeight = "bold";
+        topbar.fixedToCamera = true;
+
+        roomInfo = game.add.text(10, 10, "방코드: 1\n비밀번호: 12684",
+        { font: "bold 20px Arial", fill: "#000"});
+        roomInfo.fontWeight = "bold";
+        roomInfo.fixedToCamera = true;
 
         lose = game.add.image(screenWidth / 2, screenHeight / 2, 'lose');
         lose.fixedToCamera = true;
@@ -611,6 +649,8 @@ let inGame =
         this.breakCool += game.time.physicsElapsed;
 
         player.update();
+        if (roomid != -2) roomInfo.text = "방코드: " + roomid + "\n비밀번호: " + roomPassword;
+        if (roomid == -2) topbar.text = "";
 
         this.animaiton();
         this.blockCollision();
@@ -675,6 +715,8 @@ let inGame =
         game.world.bringToTop(regame);
         game.world.bringToTop(mainmenu);
         game.world.bringToTop(rank);
+        game.world.bringToTop(topbar);
+        game.world.bringToTop(roomInfo);
 
         // 7층 : 페이드
         game.world.bringToTop(this.fade);
@@ -1245,9 +1287,18 @@ socket.on("update", function(data)
 {
     if (game.state.current == 'inGame' && roomid !== -2)
     {
+        mapSize.x = data.room.option.mapSize;
+        mapSize.y = data.room.option.mapSize;
+        game.world.setBounds(0, 0, mapSize.x, mapSize.y);
+
         map = data.room.map;
         foodChain = data.room.foodchain;
         status = data.room.status;
+        roomPassword = (data.room.option.password === null) ? "-" : data.room.option.password;
+        if (status == 0)
+            topbar.text = "플레이어를 기다리는 중입니다 (" + data.users.length + "/" + data.room.option.numberOfUsers + ")";
+        else if (status == 1)
+            topbar.text = playerName[foodChain.find(chain => chain.hunter == socket.id).target] + "님을 잡으세요!";
         updateChat(data.room.chat);
     }
     if (game.state.current != 'main')
@@ -1356,6 +1407,21 @@ socket.on("roomCreated", (data) => {
     if (game.state.current == 'main')
     {
         roomid = data.roomid;
+    }
+});
+socket.on("joinSuccess", (data) => {
+    if (game.state.current == 'main')
+    {
+        roomid = data.roomid;
+    }
+});
+socket.on("joinFailed", (data) => {
+    if (game.state.current == 'main')
+    {
+        if (data.error == 1) alert("존재하지 않는 방입니다.");
+        if (data.error == 2) alert("비밀번호가 틀렸습니다.");
+        if (data.error == 3) alert("이미 시작한 방입니다.");
+        if (data.error == 4) alert("존재하지 않는 방입니다.");
     }
 });
 socket.on("gameStart", (data) => {
