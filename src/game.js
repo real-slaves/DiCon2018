@@ -650,7 +650,7 @@ let inGame =
 
         player.update();
         if (roomid != -2) roomInfo.text = "방코드: " + roomid + "\n비밀번호: " + roomPassword;
-        if (roomid == -2) topbar.text = "";
+        if (roomid == -2 || player.isDead) topbar.text = "";
 
         this.animaiton();
         this.blockCollision();
@@ -1287,19 +1287,22 @@ socket.on("update", function(data)
 {
     if (game.state.current == 'inGame' && roomid !== -2)
     {
-        mapSize.x = data.room.option.mapSize;
-        mapSize.y = data.room.option.mapSize;
-        game.world.setBounds(0, 0, mapSize.x, mapSize.y);
-
-        map = data.room.map;
-        foodChain = data.room.foodchain;
-        status = data.room.status;
-        roomPassword = (data.room.option.password === null) ? "-" : data.room.option.password;
-        if (status == 0)
-            topbar.text = "플레이어를 기다리는 중입니다 (" + data.users.length + "/" + data.room.option.numberOfUsers + ")";
-        else if (status == 1)
-            topbar.text = playerName[foodChain.find(chain => chain.hunter == socket.id).target] + "님을 잡으세요!";
-        updateChat(data.room.chat);
+        if (data.room.option != null)
+        {
+            mapSize.x = data.room.option.mapSize;
+            mapSize.y = data.room.option.mapSize;
+            game.world.setBounds(0, 0, mapSize.x, mapSize.y);
+    
+            map = data.room.map;
+            foodChain = data.room.foodchain;
+            status = data.room.status;
+            roomPassword = (data.room.option.password === null) ? "-" : data.room.option.password;
+            if (status == 0)
+                topbar.text = "플레이어를 기다리는 중입니다 (" + data.users.length + "/" + data.room.option.numberOfUsers + ")";
+            else if (status == 1)
+                topbar.text = playerName[foodChain.find(chain => chain.hunter == socket.id).target] + "님을 잡으세요!";
+            updateChat(data.room.chat);
+        }
     }
     if (game.state.current != 'main')
     {
