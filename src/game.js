@@ -622,9 +622,9 @@ let inGame =
                 else
                 {
                     roomid = parseInt(lastedRoomid);
-                    game.state.start('waiting');
+                    socket.emit('join', {access: 0, roomid:parseInt(roomid), password: roomPassword});
                     document.querySelector("#chat").setAttribute("class", "hide");
-                    socket.emit('join', {access: 0, roomid, password: roomPassword});
+                    game.state.start('waiting');
                 }
             }
         }, this, 2, 1, 0)
@@ -1268,7 +1268,7 @@ class Enemy
         this.id = data.id;
         if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
         {
-            this.body.tint = 0xffe13a;
+            this.body.tint = 0xffff00;
             minimapAnchor[minimapAnchor.length - 1].tint = 0xffe13a;
         }
         else
@@ -1281,7 +1281,7 @@ class Enemy
             this.tail[index].scale.setTo(tail.scale.x, tail.scale.y);
             this.tail[index].rotation = game.physics.arcade.angleBetween(this.tail[index].position, (index == 0) ? this.body.position : this.tail[index - 1].position);
             if (foodChain.find(chain => (chain.hunter == socket.id)) != undefined && foodChain.find(chain => (chain.hunter == socket.id)).target == data.id)
-                this.tail[index].tint = 0xffe13a;
+                this.tail[index].tint = 0xffff00 + Math.round(255 * (index) / this.tail.length);
         });
 
         playerName[data.id] = data.username;
@@ -1418,7 +1418,7 @@ socket.on("died", (data) => {
     emitter.start(true, 1500, null, 10);
 });
 socket.on("gameEnd", (value) => {
-    lastedRoomid = roomid;
+    lastedRoomid = parseInt(roomid);
     roomid = -2;
     player.gameEnd(value);
 });
