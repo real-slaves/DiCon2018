@@ -533,7 +533,7 @@ let inGame =
         game.stage.backgroundColor = '#f1f1f1';
         game.physics.startSystem(Phaser.Physics.ARCADE);    
         game.world.setBounds(0, 0, mapSize.x, mapSize.y);
-        this.tile = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'background');
+        this.tile = game.add.tileSprite(0, 0, 5000, 5000, 'background');
         this.tile.tint = 0xffffff;
 
         this.minimap = game.add.image(screenWidth - 125, screenHeight - 125, 'minimap');
@@ -559,18 +559,14 @@ let inGame =
         leftEnemyText2 = game.add.text(screenWidth - 145, 198, "0", { font: "20px Arial", fill: "#cccccc"});
         leftEnemyText2.fixedToCamera = true;
 
-        player = new Player();
-        player.body.position.x = game.rnd.realInRange(0, mapSize.x);
-        player.body.position.y = game.rnd.realInRange(0, mapSize.y);
-        for (let i = 0; i < 4; i++)
-            player.addTail();
+        player = null;
 
         blocks.forEach(value => value.destroy());
         blocks = [];
 
         this.time = 0;
         this.breakCool = 0;
-        this.fade = game.add.tileSprite(0, 0, mapSize.x, mapSize.y, 'fade');
+        this.fade = game.add.tileSprite(0, 0, 5000, 5000, 'fade');
 
         win = game.add.image(screenWidth / 2, screenHeight / 2, 'win');
         win.fixedToCamera = true;
@@ -618,7 +614,7 @@ let inGame =
                 roomid = -1;
                 game.state.start('waiting');
                 document.querySelector("#chat").setAttribute("class", "hide");
-                socket.emit('join', {access: 1});
+                socket.emit('join', {access: 1, roomid, password: roomPassword});
             }
         }, this, 2, 1, 0)
 
@@ -637,10 +633,6 @@ let inGame =
         emitter.maxParticleSpeed.setTo(250, 250);
         emitter.minParticleScale = 0.5;
         emitter.maxParticleScale = 1.2;
-
-        emitter.x = player.body.position.x;
-        emitter.y = player.body.position.y;
-        emitter.start(true, 1500, null, 10);
     },
 
     update : function()
@@ -648,9 +640,10 @@ let inGame =
         this.time += game.time.physicsElapsed;
         this.breakCool += game.time.physicsElapsed;
 
-        player.update();
+        if (player != null)
+            player.update();
         if (roomid != -2) roomInfo.text = "방코드: " + roomid + "\n비밀번호: " + roomPassword;
-        if (roomid == -2 || player.isDead) topbar.text = "";
+        if (roomid == -2 || player != null && player.isDead) topbar.text = "";
 
         this.animaiton();
         this.blockCollision();
@@ -682,8 +675,11 @@ let inGame =
         blocks.filter(element => element.type == 5).forEach(element => game.world.bringToTop(element));
 
         // 2층 : 플레이어
-        game.world.bringToTop(player.body);
-        player.tail.forEach(element => game.world.bringToTop(element));
+        if (player != null)
+        {
+            game.world.bringToTop(player.body);
+            player.tail.forEach(element => game.world.bringToTop(element));
+        }
 
         // 3층 : 적
         enemiesData.forEach(element1 => {
@@ -1200,7 +1196,7 @@ class Enemy
         minimapAnchor.forEach(anchor => {
             anchor.destroy();
         })
-        enemiesData = []; 
+        enemiesData = [];
         minimapAnchor = [];
 
         // Save User's roomid
@@ -1292,6 +1288,19 @@ socket.on("update", function(data)
             mapSize.x = data.room.option.mapSize;
             mapSize.y = data.room.option.mapSize;
             game.world.setBounds(0, 0, mapSize.x, mapSize.y);
+
+            if (player == null)
+            {
+                player = new Player();
+                player.body.position.x = game.rnd.realInRange(0, mapSize.x);
+                player.body.position.y = game.rnd.realInRange(0, mapSize.y);
+                for (let i = 0; i < 4; i++)
+                    player.addTail();
+
+                emitter.x = player.body.position.x;
+                emitter.y = player.body.position.y;
+                emitter.start(true, 1500, null, 10);
+            }
     
             map = data.room.map;
             foodChain = data.room.foodchain;
