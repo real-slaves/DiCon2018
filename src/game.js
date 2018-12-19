@@ -235,14 +235,14 @@ let main =
         this.roomCreate_object_previous = game.add.button(-1000, screenHeight/2 + 40, 'previous', () => {
             if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
             {
-                roomCreate_object_value = (roomCreate_object_value == 0) ? 50 : roomCreate_object_value - 5;
+                roomCreate_object_value = (roomCreate_object_value == 0) ? 40 : roomCreate_object_value - 5;
                 this.roomCreate_object_text.text = roomCreate_object_value;
             }
         }, this, 2, 1, 0)
         this.roomCreate_object_next = game.add.button(-1000, screenHeight/2 + 40, 'next', () => {
             if (this.openRoomCreate && this.time - this.openRoomCreate >= 1)
             {
-                roomCreate_object_value = (roomCreate_object_value == 50) ? 0 : roomCreate_object_value + 5;
+                roomCreate_object_value = (roomCreate_object_value == 40) ? 0 : roomCreate_object_value + 5;
                 this.roomCreate_object_text.text = roomCreate_object_value;
             }
         }, this, 2, 1, 0)
