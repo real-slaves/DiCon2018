@@ -491,7 +491,7 @@ let main =
                     }
                     else
                     {
-                        socket.emit('join', {access: 0, roomid: roomid, password: 0});
+                        socket.emit('join', {access: 0, roomid: roomid, password: 0, username});
                         game.state.start('waiting');
                     }
                 }
@@ -632,7 +632,7 @@ let inGame =
                 blocks.forEach(value => value.destroy());
                 blocks = [];
                 
-                if (roomPassword == '-')
+                if (roomPassword == "-")
                 {
                     roomid = -1;
                     game.state.start('waiting');
