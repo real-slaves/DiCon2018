@@ -642,7 +642,7 @@ let inGame =
                 else
                 {
                     roomid = parseInt(lastedRoomid);
-                    socket.emit('join', {access: 0, roomid:parseInt(roomid), password: roomPassword});
+                    socket.emit('join', {access: 0, roomid:parseInt(roomid), password: roomPassword, username});
                     document.querySelector("#chat").setAttribute("class", "hide");
                     game.state.start('waiting');
                 }
