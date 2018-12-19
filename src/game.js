@@ -1337,10 +1337,12 @@ socket.on("update", function(data)
             foodChain = data.room.foodchain;
             status = data.room.status;
             roomPassword = (data.room.option.password === null) ? "-" : data.room.option.password;
-            if (status == 0)
+            if (status == 0 && !player.isDead)
                 topbar.text = "플레이어를 기다리는 중입니다 (" + data.users.length + "/" + data.room.option.numberOfUsers + ")";
-            else if (status == 1)
-                topbar.text = playerName[foodChain.find(chain => chain.hunter == socket.id).target] + "님을 잡으세요!";
+            else if (status == 1 && !player.isDead) {
+                if (foodChain.length > 1)
+                    topbar.text = playerName[foodChain.find(chain => chain.hunter == socket.id).target] + "님을 잡으세요!";
+            }
             updateChat(data.room.chat);
         }
     }
