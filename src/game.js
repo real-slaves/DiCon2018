@@ -273,7 +273,8 @@ let main =
                 socket.emit('join', {
                     access: 0,
                     roomid: this.roomJoin_code_value,
-                    password: this.roomJoin_password_value
+                    password: this.roomJoin_password_value,
+                    username: username
                 });
                 this.goToWaiting = this.time;
                 this.isRandomRoom = false;
