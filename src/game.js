@@ -59,6 +59,9 @@ let main =
         game.load.image('madeBy', 'src/assets/sprites/UI/main/madeBy.png');
         game.load.image('yourName', 'src/assets/sprites/UI/main/yourName.png');
         game.load.image('inputNickname', 'src/assets/sprites/UI/main/inputNickname.png');
+        game.load.image('guide', 'src/assets/sprites/UI/main/guide.png');
+        game.load.image('openGuide', 'src/assets/sprites/UI/main/openGuide.png');
+        game.load.image('closeGuide', 'src/assets/sprites/UI/main/closeGuide.png');
 
         game.load.image('roomCreate_logo', 'src/assets/sprites/UI/main/roomCreate/roomCreate_logo.png');
         game.load.image('roomCreate_mapSize', 'src/assets/sprites/UI/main/roomCreate/roomCreate_mapSize.png');
@@ -292,6 +295,22 @@ let main =
         this.roomJoin_password_input = game.add.button(screenWidth, screenHeight/2 + 70, 'inputNickname', () => {
             this.focus = "password";
         }, this, 2, 1, 0);
+
+        this.guide = game.add.sprite(screenWidth / 2, screenHeight / 2, 'guide');
+        this.guide.anchor.setTo(0.5);
+        this.guide.scale.setTo(1.2);
+        this.guide.alpha = 0;
+
+        this.openGuide = game.add.button(screenWidth - 100, 5, 'openGuide', () => {
+            this.guide.alpha = 1;
+            this.closeGuide.alpha = 1;
+        }, this, 2, 1, 0);
+
+        this.closeGuide = game.add.button(screenWidth / 2 + 360, screenHeight / 2 - 295, 'closeGuide', () => {
+            this.guide.alpha = 0;
+            this.closeGuide.alpha = 0;
+        }, this, 2, 1, 0);
+        this.closeGuide.alpha = 0;
 
         emitter = game.add.emitter(0, 0, 75);
         emitter.makeParticles('particle');
@@ -612,7 +631,7 @@ let inGame =
                 blocks.forEach(value => value.destroy());
                 blocks = [];
                 
-                if (roomPassword == null)
+                if (roomPassword == '-')
                 {
                     roomid = -1;
                     game.state.start('waiting');
