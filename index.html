@@ -68,7 +68,7 @@
 </head>
 <body>
     <div id="chat" class="hide">
-    <input type="text" id="input" onkeypress="if(event.keyCode==13) {postChat(); return false;}" autofocus/>
+    <input type="text" id="input" onkeypress="if(event.keyCode==13) {postChat(); this.focus(); return false;}" autofocus/>
     </div>
     <script src="src/game.js"></script>
 </body>

@@ -357,6 +357,11 @@ let main =
         }
 
         // input
+        if (game.input.keyboard.downDuration(13, 1)) // enter
+        {
+            if (this.focus == "code")
+                this.focus = "password";
+        }
         if (game.input.keyboard.downDuration(189, 1)) // minus, underbar
         {
             if (this.focus == "nickname" && username.length < 15)
@@ -675,7 +680,7 @@ let inGame =
             player.update();
         if (roomid != -2) roomInfo.text = "방코드: " + roomid + "\n비밀번호: " + roomPassword;
         if (roomid == -2 || player != null && player.isDead) topbar.text = "";
-
+        
         this.animaiton();
         this.blockCollision();
         this.setLayer();
